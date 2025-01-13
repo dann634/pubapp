@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:location/location.dart';
 
 void main() {
   runApp(MyApp());
@@ -98,30 +100,66 @@ class MapScreen extends StatefulWidget {
 }
 
 class MapScreenState extends State<MapScreen> {
-  late GoogleMapController mapController;
+  LocationData? currentLocation;
+  final Completer<GoogleMapController> _controller = Completer();
+  BitmapDescriptor currentLocationIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
 
-  // Set an initial location (center of the map)
-  final LatLng _center = const LatLng(-33.86, 151.20);
+  // void setCustomMarkerIcon() {
+  //   BitmapDescriptor.fromAssetImage()
+  // }
 
-  // Map creation callback
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+  @override
+  void initState() {
+    getLocation();
+    super.initState();
+
+  }
+
+  void getLocation() async {
+
+    Location location = Location();
+    location.getLocation().then((location) {
+      currentLocation = location;
+      setState(() {});
+    });
+
+    GoogleMapController googleMapController = await _controller.future;
+
+
+    location.onLocationChanged.listen((newLoc) {
+      currentLocation = newLoc;
+
+      googleMapController.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(
+              zoom: 16.0,
+              target: LatLng(newLoc.latitude!, newLoc.longitude!))));
+
+      setState(() {});
+    });
+
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Maps Sample App'),
-        backgroundColor: Colors.green[700],
-      ),
-      body: GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: CameraPosition(
-          target: _center,
-          zoom: 11.0,
-        ),
-      ),
+      body: currentLocation == null
+          ? Center(child: CircularProgressIndicator())
+          : GoogleMap(
+              onMapCreated: (mapController) {
+                _controller.complete(mapController);
+              },
+              initialCameraPosition: CameraPosition(
+                target: LatLng(
+                    currentLocation!.latitude!, currentLocation!.longitude!),
+                zoom: 16.0,
+              ),
+              markers: {
+                Marker(
+                  markerId: MarkerId("location"),
+                  position: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+                )
+              },
+            ),
     );
   }
 }
@@ -134,19 +172,15 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color.fromRGBO(24, 24, 24, 1),
         toolbarHeight: 20,
-        ),
-
+      ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color.fromRGBO(255, 153, 0, 1),
+          backgroundColor: Color.fromRGBO(255, 153, 0, 1),
           child: Icon(
             Icons.add,
             size: 35,
@@ -154,9 +188,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
           onPressed: () {
             //ADD SHOW SEARCH MENU HERE
-        }
-      ),
-
+          }),
       backgroundColor: Color.fromRGBO(49, 49, 49, 1),
       body: Center(
         child: Column(
@@ -164,7 +196,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
             Container(
               width: double.infinity,
               alignment: Alignment.center,
-              child: Text("Available",
+              child: Text(
+                "Available",
                 style: TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.bold,
@@ -172,8 +205,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 ),
               ),
             ),
-
-            Text("Unavailable",
+            Text(
+              "Unavailable",
               style: TextStyle(
                 color: Colors.red,
                 fontSize: 24,
@@ -186,7 +219,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 }
-
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -202,7 +234,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Color.fromRGBO(49, 49, 49, 1),
       body: Center(
         child: Column(
-          
           spacing: 40,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -210,10 +241,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               "Pub?",
               style: TextStyle(
-                fontSize: 64,
-                fontWeight: FontWeight.bold,
-                color: Colors.white60
-              ),
+                  fontSize: 64,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white60),
             ),
 
             GestureDetector(
@@ -249,7 +279,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
           ],
         ),
       ),
