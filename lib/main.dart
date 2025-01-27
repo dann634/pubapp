@@ -1,9 +1,17 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_confetti/flutter_confetti.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
+import 'package:pubapp/connection.dart';
+import 'package:pubapp/utils.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import 'login.dart';
+import 'home.dart';
+import 'friends.dart';
+import 'map.dart';
+import 'profile.dart';
+import 'events.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,10 +21,40 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bottom Navigation Bar Demo',
+      title: 'Pub?',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: DEFAULT_WHITE), // Set default text color for large body text
+          bodyMedium: TextStyle(color: DEFAULT_WHITE), // Set default text color for medium body text
+          bodySmall: TextStyle(color: DEFAULT_WHITE), // Set default text color for small body text
+          headlineMedium: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          headlineSmall: TextStyle(color: DEFAULT_WHITE), // For small headings
+          headlineLarge: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          titleMedium: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          titleSmall: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          titleLarge: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          labelMedium: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          displayMedium: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          displayLarge: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          displaySmall: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          labelLarge: TextStyle(color: DEFAULT_WHITE), // For medium headings
+          labelSmall: TextStyle(color: DEFAULT_WHITE), // For medium headings
+        ),
+
+        appBarTheme: AppBarTheme(
+          backgroundColor: DEFAULT_BLACK,
+          foregroundColor: DEFAULT_WHITE,
+        ),
+        scaffoldBackgroundColor: DEFAULT_BLACK,
+
       ),
+
+
+
+
+
       home: MainScreen(),
     );
   }
@@ -28,280 +66,117 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 2; // Start at the "Home" screen (index 2)
-  final List<Widget> _screens = [
+
+  bool? isLoginNeeded; // Use nullable bool to handle loading state.
+
+  int _currentIndex = 2;
+
+  final List<Widget> _pages = [
     MapScreen(),
     FriendsScreen(),
-    HomeScreen(),
+    HomePage(),
     EventsScreen(),
-    ProfileScreen(),
+    ProfileScreen()
   ];
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus().then((value) async {
+      // Show appropriate page once login status is determined.
+      if(isLoginNeeded!) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+      } else {
+        //Get profile
+        final profile_data = await getProfile();
+
+        if(profile_data == null) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+        }
+      }
+    });
+  }
+
+  Future<void> _checkLoginStatus() async {
+    bool doesRefreshTokenExist = await _doesRefreshTokenExist();
+    isLoginNeeded = !doesRefreshTokenExist;
+
+    // //Try get access token
+    if(doesRefreshTokenExist) {
+      bool isRefreshTokenValid = await refreshAccessToken();
+      isLoginNeeded = !isRefreshTokenValid;
+    }
+
+    setState(() {
+       // Update state when async task is complete.
+    });
+  }
+
+  Future<bool> _doesRefreshTokenExist() async {
+    String? refreshToken = await secureStorage.read(key: 'refreshToken');
+    return refreshToken != null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    Color _barColor = Color.fromRGBO(24, 24, 24, 1);
+    // Show a loading indicator while determining login status.
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: _pages[_currentIndex],
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
-          splashFactory: NoSplash.splashFactory, // Disable the ripple effect
-          highlightColor: Colors.transparent, // Remove highlight on tap
+          splashFactory: NoSplash.splashFactory,
+          highlightColor: Colors.transparent,
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.shifting,
-          // Keep the shifting effect
-          // Apply background color
+          onTap: _onTabTapped,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Color.fromRGBO(18, 18, 18, 1),
           selectedItemColor: Colors.white,
-          // Style selected item
-          unselectedItemColor: Colors.grey,
-          // Style unselected items
+          unselectedItemColor: Color.fromRGBO(100, 100, 100, 1),
+          iconSize: 25,
           items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.map),
+              icon: Icon(Icons.location_on),
               label: 'Map',
-              backgroundColor: _barColor,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.people),
+              icon: SvgPicture.asset(
+                "assets/icons/friends.svg",
+                width: 20,
+                height: 25,
+                color: _currentIndex == 1
+                    ? Colors.white // Selected color
+                    : Color.fromRGBO(100, 100, 100, 1), // Unselected color
+              ),
               label: 'Friends',
-              backgroundColor: _barColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
-              backgroundColor: _barColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.event),
               label: 'Events',
-              backgroundColor: _barColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
               label: 'Profile',
-              backgroundColor: _barColor,
             ),
           ],
         ),
       ),
     );
-  }
-}
 
-class MapScreen extends StatefulWidget {
-  @override
-  MapScreenState createState() => MapScreenState();
-}
 
-class MapScreenState extends State<MapScreen> {
-  LocationData? currentLocation;
-  final Completer<GoogleMapController> _controller = Completer();
-  BitmapDescriptor currentLocationIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
-
-  // void setCustomMarkerIcon() {
-  //   BitmapDescriptor.fromAssetImage()
-  // }
-
-  @override
-  void initState() {
-    getLocation();
-    super.initState();
 
   }
 
-  void getLocation() async {
-
-    Location location = Location();
-    location.getLocation().then((location) {
-      currentLocation = location;
-      setState(() {});
-    });
-
-    GoogleMapController googleMapController = await _controller.future;
-
-
-    location.onLocationChanged.listen((newLoc) {
-      currentLocation = newLoc;
-
-      googleMapController.animateCamera(CameraUpdate.newCameraPosition(
-          CameraPosition(
-              zoom: 16.0,
-              target: LatLng(newLoc.latitude!, newLoc.longitude!))));
-
-      setState(() {});
-    });
-
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: currentLocation == null
-          ? Center(child: CircularProgressIndicator())
-          : GoogleMap(
-              onMapCreated: (mapController) {
-                _controller.complete(mapController);
-              },
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                    currentLocation!.latitude!, currentLocation!.longitude!),
-                zoom: 16.0,
-              ),
-              markers: {
-                Marker(
-                  markerId: MarkerId("location"),
-                  position: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
-                )
-              },
-            ),
-    );
-  }
 }
 
-class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({super.key});
-
-  @override
-  State<FriendsScreen> createState() => _FriendsScreenState();
-}
-
-class _FriendsScreenState extends State<FriendsScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color.fromRGBO(24, 24, 24, 1),
-        toolbarHeight: 20,
-      ),
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Color.fromRGBO(255, 153, 0, 1),
-          child: Icon(
-            Icons.add,
-            size: 35,
-            color: Colors.black,
-          ),
-          onPressed: () {
-            //ADD SHOW SEARCH MENU HERE
-          }),
-      backgroundColor: Color.fromRGBO(49, 49, 49, 1),
-      body: Center(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              child: Text(
-                "Available",
-                style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            Text(
-              "Unavailable",
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  bool _isYeah = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color.fromRGBO(49, 49, 49, 1),
-      body: Center(
-        child: Column(
-          spacing: 40,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Big text at the top
-            Text(
-              "Pub?",
-              style: TextStyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white60),
-            ),
-
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isYeah = !_isYeah;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 250, // Make the button circular
-                height: 250,
-                decoration: BoxDecoration(
-                  color: _isYeah ? Colors.green : Colors.red,
-                  shape: BoxShape.circle, // Circular shape
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    _isYeah ? 'Yeah' : 'Nah',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class EventsScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Fill out EventsScreen functionality here
-    return Center(
-      child: Text('Events Screen', style: TextStyle(fontSize: 24)),
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Fill out ProfileScreen functionality here
-    return Center(
-      child: Text('Profile Screen', style: TextStyle(fontSize: 24)),
-    );
-  }
-}
