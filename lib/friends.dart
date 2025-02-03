@@ -37,16 +37,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
       ),
 
 
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.of(context).size.height - 150,
-          alignment: Alignment.center,
-          padding: EdgeInsets.symmetric(
-            vertical: 15,
-            horizontal: 10
-          ),
-          child: hasLoaded ? friendsContainer : CircularProgressIndicator(
-            color: DEFAULT_WHITE,
+      body: RefreshIndicator(
+        onRefresh: loadFriendsList,
+        child: SingleChildScrollView(
+          child: Container(
+            height: MediaQuery.of(context).size.height - 150,
+            alignment: Alignment.center,
+            padding: EdgeInsets.symmetric(
+                vertical: 15,
+                horizontal: 10
+            ),
+            child: hasLoaded ? friendsContainer : CircularProgressIndicator(
+              color: DEFAULT_WHITE,
+            ),
           ),
         ),
       ),
@@ -58,8 +61,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void initState() {
     super.initState();
     //Load all friends
+    loadFriendsList();
+  }
 
+  Future<void> loadFriendsList() async {
     getFriends().then((value) {
+
+      friends.clear();
+      friendEntries.clear();
 
       if(value == null) {
         return;
@@ -73,6 +82,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
         return;
       }
 
+      friendEntries.add(Divider(color: Colors.grey));
+
       for(int i = 0; i < value.length; i++) {
 
         final friend_data = value[i];
@@ -80,36 +91,69 @@ class _FriendsScreenState extends State<FriendsScreen> {
           break;
         }
 
-        Friend friend = Friend(friend_data[0], friend_data[1], friend_data[2]);
+        Friend friend = Friend(friend_data["username"], friend_data["fullname"], friend_data["isAvailable"] != 0);
         friends.add(friend);
 
         Container row = getFriendEntry(friend);
         friendEntries.add(row);
+        friendEntries.add(Divider(color: Colors.grey));
 
       }
 
 
       friendsContainer = Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: 10
+        ),
         child: Column(
           children: friendEntries,
         ),
       );
       hasLoaded = true;
+      setState(() {});
 
     });
-
   }
 
   Container getFriendEntry(Friend friend) {
     return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10),
       child : Row(
-
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(friend.username),
-          Text(friend.isAvailable ? "Available" : "Not Available"),
-        ],
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(friend.username,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
 
-      ),
+              Text(friend.fullname,
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+
+          Row(
+            spacing: 10,
+            children: [
+
+            CircleAvatar(
+            radius: 10, // Half the diameter
+            backgroundColor: friend.isAvailable ? Colors.green : Colors.red, // Set the color of the circle
+            )
+
+
+      ],
+          )
+
+        ],
+      )
     );
   }
 
@@ -138,6 +182,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   bool _hideError = true;
 
   List<Friend> friendRequests = List<Friend>.empty(growable: true);
+  final inputField = TextEditingController();
+  Column? friendRequestsColumn;
+  bool hasLoaded = false;
 
   void _showErrorMessage() {
     setState(() {
@@ -150,7 +197,120 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   void initState() {
     super.initState();
     //Get all friend requests
+    loadFriendRequestList();
 
+  }
+
+  void loadFriendRequestList() {
+    getFriendRequests().then((list) {
+
+      if(list!.isEmpty) {
+        friendRequestsColumn = Column(
+          children: [],
+        );
+        hasLoaded = true;
+        setState(() {});
+        return;
+      }
+
+      //Show requests
+      List<Widget> widgets = List<Widget>.empty(growable: true);
+
+      widgets.add(Divider(color: DEFAULT_GREY));
+
+      for(int i = 0; i < list.length; i++) {
+        final user = list[i];
+        widgets.add(getFriendRequestRow(user[0], user[1]));
+        widgets.add(Divider(color: DEFAULT_GREY,));
+      }
+
+      friendRequestsColumn = Column(
+        children: widgets,
+      );
+
+      hasLoaded = true;
+      setState(() {});
+
+    });
+  }
+
+  Row getFriendRequestRow(String username, String fullName) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(username,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            Text(fullName,
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+
+        Row(
+          spacing: 10,
+          children: [
+            TextButton(
+              onPressed: () {
+                respondToFriendRequest(username, true).then((onValue) {
+                  //Remove row from screen
+                  loadFriendRequestList();
+                });
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,  // Background color to white
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),  // Rounded corners
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20), // Padding for better button size
+                foregroundColor: DEFAULT_BLACK,
+              ),
+              child: Text("Accept",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14
+                ),
+              ),
+            ),
+
+            TextButton(
+              onPressed: () {
+                respondToFriendRequest(username, false).then((onValue) {
+                  //Remove row from
+                  loadFriendRequestList();
+                });
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,  // Background color to white
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),  // Rounded corners
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20), // Padding for better button size
+                foregroundColor: DEFAULT_BLACK,
+              ),
+              child: Text("Ignore",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14
+                ),
+              ),
+            )
+
+
+          ],
+        )
+
+      ],
+    );
   }
 
   @override
@@ -160,6 +320,16 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
         title: Text("Add Friend"),
         centerTitle: true,
+
+        actions: [
+          IconButton(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            onPressed: () {
+              loadFriendRequestList();
+            },
+            icon: Icon(Icons.refresh),
+          )
+        ],
 
       ),
       body: SingleChildScrollView(
@@ -172,12 +342,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           ),
 
           child: Column(
+            spacing: 10,
             children: [
               Row(
                 spacing: 20,
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: inputField,
                       style: TextStyle(
                           color: DEFAULT_WHITE,
                       ),
@@ -209,7 +381,19 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      sendFriendRequest(inputField.text).then((value) {
+
+                        if(!value) {
+                          _errorMsg = "User not found";
+                          _showErrorMessage();
+                          return;
+                        }
+
+                      });
+
+
+                    },
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.white,  // Background color to white
                       shape: RoundedRectangleBorder(
@@ -236,6 +420,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   ),
                 ),
               ),
+
+              hasLoaded ? friendRequestsColumn! : Container(),
+
             ],
           ),
 

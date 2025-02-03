@@ -127,8 +127,9 @@ class _LoginPageState extends State<LoginPage> {
 
     await login(usernameController.text, passwordController.text).then((onValue) {
       if(onValue) {
-        getProfile();
-        Navigator.pop(context);
+        getProfile().then((value) {
+          Navigator.pop(context);
+        });
       } else {
         setState(() {
           //Error Message

@@ -7,11 +7,15 @@ final HOST = "http://ec2-18-134-134-33.eu-west-2.compute.amazonaws.com:5000";
 
 final secureStorage = FlutterSecureStorage();
 
-String? _accessToken;
 
 String? username;
 String? fullName;
 bool? isAvailable;
+
+Map<String, String> headers = {
+  'Content-Type': 'application/json',
+  "Authorization": "",
+};
 
 // Fetch data from the API
 Future<bool> refreshAccessToken() async {
@@ -33,16 +37,16 @@ Future<bool> refreshAccessToken() async {
     if (response.statusCode == 200) {
       // Decode the JSON response
       final jsonData = json.decode(response.body);
-      _accessToken = jsonData['access_token']; // Update the access token
+      String newAccessToken = jsonData["access_token"];
+      headers["Authorization"] = "Bearer $newAccessToken";
+      return true;
     } else {
       data = "Failed to load data. Status code: ${response.statusCode}";
-      return false;
     }
   } catch (error) {
     data = "Error: $error";
-    return false;
   }
-  return true;
+  return false;
 }
 
 // Fetch data from the API
@@ -70,7 +74,7 @@ Future<String> register(String localUsername, String password, String localFullN
     if (response.statusCode == 201) {
       // Decode the JSON response
       final jsonData = json.decode(response.body);
-      _accessToken = jsonData['access_token'];
+      headers["Authorization"] = "Bearer ${jsonData["access_token"]}";
 
       //Store refresh token in secure storage
       String refreshToken = jsonData['refresh_token'];
@@ -113,7 +117,7 @@ Future<bool> login(String username, String password) async {
     if (response.statusCode == 200) {
       // Decode the JSON response
       final jsonData = json.decode(response.body);
-      _accessToken = jsonData['access_token'];
+      headers["Authorization"] = "Bearer ${jsonData["access_token"]}";
 
       //Store refresh token in secure storage
       String refreshToken = jsonData['refresh_token'];
@@ -130,30 +134,11 @@ Future<bool> login(String username, String password) async {
   return true;
 }
 
-Future<List?> getProfile() async {
+Future<Map<String, dynamic>?> getProfile() async {
 
-  final url = Uri.parse("$HOST/me");
+  final url = "$HOST/me";
 
-  http.Response response;
-
-  response = await http.get(
-    url,
-    headers: {
-      'Content-Type': 'application/json',
-      "Authorization": "Bearer $_accessToken",
-    },
-  );
-
-  if (response.statusCode != 200) {
-    refreshAccessToken();
-    response = await http.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        "Authorization": "Bearer $_accessToken",
-      },
-    );
-  }
+  final response = await handleGETRequest(url);
 
   if(response.statusCode != 200) {
     return null;
@@ -162,37 +147,33 @@ Future<List?> getProfile() async {
   // Parse the JSON response into a Map and return it
   final data = jsonDecode(response.body);
 
-  username = data[0];
-  fullName = data[1];
-  isAvailable = data[2] as bool;
+  username = data["username"];
+  fullName = data["fullname"];
+  isAvailable = data["isAvailable"] != 0;
 
   return data;
 }
 
 Future<List?> getFriends() async {
 
-  final url = Uri.parse("$HOST/me/friends");
 
-  http.Response response;
+  final response = await handleGETRequest("$HOST/me/friends");
 
-  response = await http.get(
-    url,
-    headers: {
-      'Content-Type': 'application/json',
-      "Authorization": "Bearer $_accessToken",
-    },
-  );
-
-  if (response.statusCode != 200) {
-    refreshAccessToken();
-    response = await http.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        "Authorization": "Bearer $_accessToken",
-      },
-    );
+  if(response.statusCode != 200) {
+    return null;
   }
+
+  // Parse the JSON response into a Map and return it
+  final data = jsonDecode(response.body);
+
+  return data;
+}
+
+Future<List?> getFriendRequests() async {
+
+  final url = "$HOST/me/friends/requests";
+
+  final response = await handleGETRequest(url);
 
   if(response.statusCode != 200) {
     return null;
@@ -205,3 +186,99 @@ Future<List?> getFriends() async {
 }
 
 
+Future<bool> respondToFriendRequest(String friendUsername, bool accept) async {
+  final url = "$HOST/me/friends/requests/respond";
+
+  final data = {
+    "friend_username" : friendUsername,
+    "choice" : accept ? "add" : "remove",
+  };
+
+  final response = await handlePOSTRequest(url, data);
+
+  return response.statusCode == 201;
+
+}
+
+
+Future<bool> sendFriendRequest(String username) async {
+
+  final url = "$HOST/me/friends/add";
+
+  final data = {
+    "friend_username" : username,
+  };
+
+  final response = await handlePOSTRequest(url, data);
+
+  if(response.statusCode == 404) {
+    //friend not found
+    return false;
+  }
+
+  if(response.statusCode != 200) {
+    return false;
+  }
+  // Parse the JSON response into a Map and return it
+
+  return true;
+}
+
+Future<void> setAvailability(value) async {
+  final url = "$HOST/me/availability";
+
+  final data = {
+    "is_available" : value
+  };
+
+  final response = await handlePOSTRequest(url, data);
+}
+
+
+
+Future<http.Response> handleGETRequest(uri) async {
+
+  final url = Uri.parse(uri);
+
+  http.Response response;
+
+  response = await http.get(
+      url,
+      headers: headers,
+  );
+
+  if(response.statusCode == 401 || response.statusCode == 422) {
+    //Invalid access code or expired
+    await refreshAccessToken();
+
+    response = await http.get(
+      url,
+      headers: headers,
+    );
+
+  }
+  return response;
+}
+
+Future<http.Response> handlePOSTRequest(uri, data) async {
+
+
+  final url = Uri.parse(uri);
+  http.Response response;
+
+  response = await http.post(
+    url,
+    headers: headers,
+    body: jsonEncode(data),
+  );
+
+  if(response.statusCode == 401 || response.statusCode == 422) {
+    await refreshAccessToken();
+    response = await http.post(
+      url,
+      headers: headers,
+      body: jsonEncode(data),
+    );
+  }
+  return response;
+}

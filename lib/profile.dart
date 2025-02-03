@@ -22,6 +22,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            padding: EdgeInsets.only(right: 15),
+            onPressed: () {
+
+            },
+            icon: Icon(Icons.settings_outlined),
+          )
+        ],
       ),
       body: SingleChildScrollView(
         child: Container(

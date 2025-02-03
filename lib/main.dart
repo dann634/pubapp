@@ -11,7 +11,7 @@ import 'home.dart';
 import 'friends.dart';
 import 'map.dart';
 import 'profile.dart';
-import 'events.dart';
+import 'drinks.dart';
 
 void main() {
   runApp(MyApp());
@@ -75,7 +75,7 @@ class _MainScreenState extends State<MainScreen> {
     MapScreen(),
     FriendsScreen(),
     HomePage(),
-    EventsScreen(),
+    DrinksScreen(),
     ProfileScreen()
   ];
 
@@ -162,8 +162,8 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.event),
-              label: 'Events',
+              icon: Icon(Icons.water_drop_outlined),
+              label: 'Drinks',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
