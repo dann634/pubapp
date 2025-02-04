@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'utils.dart';
 
 class DrinksScreen extends StatefulWidget {
@@ -39,18 +40,20 @@ class _DrinksScreenState extends State<DrinksScreen> {
   Drink("Somersby Apple", 2.50, "Cider"),
 
   // Spirits
-  Drink("Vodka (Smirnoff)", 1.0, "Vodka"),
-  Drink("Whiskey (Jack Daniel’s)", 1.0, "Whiskey"),
-  Drink("Rum (Captain Morgan)", 1.0, "Rum"),
-  Drink("Gin (Gordon’s)", 0.94, "Gin"),
-  Drink("Tequila (Jose Cuervo)", 0.95, "Tequila"),
-  Drink("Brandy (Hennessy)", 1.0, "Brandy"),
-  Drink("Absinthe", 1.38, "Spirit"),
-  Drink("Sambuca", 0.95, "Spirit"),
-  Drink("Baileys Irish Cream", 0.43, "Cream Liqueur"),
-  Drink("Jägermeister", 0.88, "Jager"),
+  Drink("Smirnoff", 1.0, "Vodka"),
+  Drink("Jack Daniel’s", 1.0, "Whiskey"),
+  Drink("Captain Morgan", 1.0, "Rum"),
+  Drink("Gordon’s", 0.94, "Gin"),
+  Drink("Jose Cuervo", 0.95, "Tequila"),
+  Drink("Hennessy", 1.0, "Brandy"),
+
+  Drink("Absinthe", 1.38, "Other"),
+  Drink("Sambuca", 0.95, "Other"),
+  Drink("Baileys Irish Cream", 0.43, "Other"),
+  Drink("Jägermeister", 0.88, "Other"),
   ];
 
+  List<TextEditingController> textControllers = List<TextEditingController>.empty(growable: true);
   List<DrinkTypeRow> tiles = List<DrinkTypeRow>.empty(growable: true);
 
   void getExpansionWidgets() {
@@ -73,18 +76,96 @@ class _DrinksScreenState extends State<DrinksScreen> {
         subList = List<Widget>.empty(growable: true);
       }
 
-      subList.add(Row(
-        children: [
-          Text(drink.name,
-            style: TextStyle(
-              color: DEFAULT_WHITE,
-            ),
-          )
-        ],
-      ));
+      final textController = TextEditingController();
+      subList.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(drink.name, style: TextStyle(color: DEFAULT_WHITE)),
+                  Text("${drink.units} units", style: TextStyle(color: DEFAULT_GREY)),
+                ],
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+
+                      String currentText = textController.text;
+                      if(currentText.isNotEmpty) {
+                        int currentNumber = int.parse(currentText);
+                        if(currentNumber > 0) {
+                          textController.text = (currentNumber - 1).toString();
+                        }
+                      }
+
+                    },
+                    icon: Icon(Icons.remove, color: DEFAULT_WHITE),
+                  ),
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: TextField(
+                      controller: textController,
+                      keyboardType: TextInputType.number,  // Numbers only
+                      textAlign: TextAlign.center,
+                      textAlignVertical: TextAlignVertical.center, // Vertically center the text
+
+                      style: TextStyle(
+                        color: DEFAULT_WHITE,
+                        fontSize: 15,
+                      ), // Text color
+
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: DEFAULT_GREY), // Default border color
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: DEFAULT_GREY), // Default border color
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: DEFAULT_WHITE, width: 2), // White focused border
+                        ),
+                        contentPadding: EdgeInsets.only(bottom: 10), // Adjust for vertical centering
+                      ),
+
+                      cursorColor: DEFAULT_WHITE, // White cursor
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Restrict input to numbers only
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      String currentText = textController.text;
+                      if(currentText.isEmpty) {
+                        textController.text = "1";
+                      } else {
+                        int newNumber = int.parse(currentText) + 1;
+                        textController.text = newNumber.toString();
+                      }
+                    },
+                    icon: Icon(Icons.add, color: DEFAULT_WHITE),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      textControllers.add(textController);
+
 
     }
   }
+
+
 
 
   @override
@@ -131,7 +212,6 @@ class _DrinksScreenState extends State<DrinksScreen> {
 
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 15,
                         vertical: 10,
                       ),
                       child: Column(
@@ -141,6 +221,8 @@ class _DrinksScreenState extends State<DrinksScreen> {
                           Expanded(
                             child: SingleChildScrollView(
                               child: ExpansionPanelList(
+                                expandedHeaderPadding: EdgeInsets.zero,
+                                materialGapSize: 0,
                                 expandIconColor: DEFAULT_WHITE,
                                 dividerColor: DEFAULT_GREY,
                                 expansionCallback: (int index, bool isExpanded) {
@@ -154,6 +236,10 @@ class _DrinksScreenState extends State<DrinksScreen> {
                                     backgroundColor: DEFAULT_BLACK,
                                     headerBuilder: (context, isExpanded) {
                                       return ListTile(
+
+                                        contentPadding: EdgeInsets.symmetric(
+
+                                        ),
                                         iconColor: DEFAULT_WHITE,
                                         title: Text(
                                             item.header,
@@ -176,6 +262,34 @@ class _DrinksScreenState extends State<DrinksScreen> {
 
                           TextButton(
                             onPressed: () {
+
+                              //Get total units and count for each section
+                              double totalUnits = 0;
+                              final drinkTypeDict = {};
+                              for(int i = 0; i < allDrinks.length; i++) {
+                                final textController = textControllers[i];
+                                String text = textController.text;
+                                if(text.isNotEmpty && int.parse(text) > 0) {
+
+                                  int drinkCount = int.parse(text);
+
+                                  final drink = allDrinks[i];
+
+                                  double units = drinkCount * drink.units;
+                                  totalUnits += units;
+
+
+                                  if(drinkTypeDict.containsKey(drink.type)) {
+                                    drinkTypeDict[drink.type] += drinkCount;
+                                  } else {
+                                    //Add to dictionary
+                                    drinkTypeDict[drink.type] = drinkCount;
+                                  }
+
+                                }
+                              }
+                              //Send data to server to update profile
+
 
                             },
                             style: TextButton.styleFrom(

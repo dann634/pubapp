@@ -228,6 +228,17 @@ Future<void> setAvailability(value) async {
   final response = await handlePOSTRequest(url, data);
 }
 
+Future<void> addDrinksToProfile(double units, Map<String, int> drinkTypes) async {
+  final url = "$HOST/me/drinks/add";
+
+  final data = {
+    "units": units,
+    "types": drinkTypes,
+  };
+
+  await handlePOSTRequest(url, data);
+}
+
 
 
 Future<http.Response> handleGETRequest(uri) async {
