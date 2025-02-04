@@ -211,17 +211,11 @@ Future<bool> sendFriendRequest(String username) async {
 
   final response = await handlePOSTRequest(url, data);
 
-  if(response.statusCode == 404) {
-    //friend not found
-    return false;
+  if(response.statusCode == 201) {
+    return true;
   }
 
-  if(response.statusCode != 200) {
-    return false;
-  }
-  // Parse the JSON response into a Map and return it
-
-  return true;
+  return false;
 }
 
 Future<void> setAvailability(value) async {

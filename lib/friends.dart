@@ -65,54 +65,51 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> loadFriendsList() async {
-    getFriends().then((value) {
+    final friendsList = await getFriends();
+    friends.clear();
+    friendEntries.clear();
 
-      friends.clear();
-      friendEntries.clear();
+    if(friendsList == null) {
+      return;
+    }
 
-      if(value == null) {
-        return;
-      }
-
-      if(value.isEmpty) {
-        friendsContainer = Container(
-          child: Text("Add Some Friends!"),
-        );
-        hasLoaded = true;
-        return;
-      }
-
-      friendEntries.add(Divider(color: Colors.grey));
-
-      for(int i = 0; i < value.length; i++) {
-
-        final friend_data = value[i];
-        if(friend_data == null) {
-          break;
-        }
-
-        Friend friend = Friend(friend_data["username"], friend_data["fullname"], friend_data["isAvailable"] != 0);
-        friends.add(friend);
-
-        Container row = getFriendEntry(friend);
-        friendEntries.add(row);
-        friendEntries.add(Divider(color: Colors.grey));
-
-      }
-
-
+    if(friendsList.isEmpty) {
       friendsContainer = Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 10
-        ),
-        child: Column(
-          children: friendEntries,
-        ),
+        child: Text("Add Some Friends!"),
       );
       hasLoaded = true;
-      setState(() {});
+      return;
+    }
 
-    });
+    friendEntries.add(Divider(color: Colors.grey));
+
+    for(int i = 0; i < friendsList.length; i++) {
+
+      final friend_data = friendsList[i];
+      if(friend_data == null) {
+        break;
+      }
+
+      Friend friend = Friend(friend_data["username"], friend_data["fullname"], friend_data["isAvailable"] != 0);
+      friends.add(friend);
+
+      Container row = getFriendEntry(friend);
+      friendEntries.add(row);
+      friendEntries.add(Divider(color: Colors.grey));
+
+    }
+
+
+    friendsContainer = Container(
+      padding: EdgeInsets.symmetric(
+          horizontal: 10
+      ),
+      child: Column(
+        children: friendEntries,
+      ),
+    );
+    hasLoaded = true;
+    setState(() {});
   }
 
   Container getFriendEntry(Friend friend) {
@@ -381,18 +378,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      sendFriendRequest(inputField.text).then((value) {
-
-                        if(!value) {
-                          _errorMsg = "User not found";
-                          _showErrorMessage();
-                          return;
-                        }
-
-                      });
-
-
+                    onPressed: () async {
+                      bool addedSuccessfully = await sendFriendRequest(inputField.text);
+                      if(!addedSuccessfully) {
+                        _errorMsg = "User not found";
+                        _showErrorMessage();
+                      }
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.white,  // Background color to white
