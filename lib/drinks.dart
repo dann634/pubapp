@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'utils.dart';
+import 'connection.dart';
 
 class DrinksScreen extends StatefulWidget {
   const DrinksScreen({super.key});
@@ -47,6 +48,7 @@ class _DrinksScreenState extends State<DrinksScreen> {
   Drink("Jose Cuervo", 0.95, "Tequila"),
   Drink("Hennessy", 1.0, "Brandy"),
 
+  //Other Spirits
   Drink("Absinthe", 1.38, "Other"),
   Drink("Sambuca", 0.95, "Other"),
   Drink("Baileys Irish Cream", 0.43, "Other"),
@@ -163,6 +165,12 @@ class _DrinksScreenState extends State<DrinksScreen> {
 
 
     }
+    list.add(subList);
+
+    // Add a new DrinkTypeRow for the previous category
+    tiles.add(DrinkTypeRow(header: category, content: subList));
+
+
   }
 
 
@@ -261,11 +269,11 @@ class _DrinksScreenState extends State<DrinksScreen> {
                           ),
 
                           TextButton(
-                            onPressed: () {
+                            onPressed: () async {
 
                               //Get total units and count for each section
-                              double totalUnits = 0;
-                              final drinkTypeDict = {};
+                              List<String> drinksList = List<String>.empty(growable: true);
+                              List<double> unitsList = List<double>.empty(growable: true);
                               for(int i = 0; i < allDrinks.length; i++) {
                                 final textController = textControllers[i];
                                 String text = textController.text;
@@ -275,18 +283,16 @@ class _DrinksScreenState extends State<DrinksScreen> {
 
                                   final drink = allDrinks[i];
 
-                                  double units = drinkCount * drink.units;
-                                  totalUnits += units;
-
-
-                                  if(drinkTypeDict.containsKey(drink.type)) {
-                                    drinkTypeDict[drink.type] += drinkCount;
-                                  } else {
-                                    //Add to dictionary
-                                    drinkTypeDict[drink.type] = drinkCount;
+                                  for(int j = 0; j < drinkCount; j++) {
+                                    drinksList.add(drink.type);
+                                    unitsList.add(drink.units);
                                   }
 
                                 }
+                              }
+
+                              if(drinksList.isNotEmpty) {
+                                await addDrinksToProfile(unitsList, drinksList);
                               }
                               //Send data to server to update profile
 

@@ -75,9 +75,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     if(friendsList.isEmpty) {
       friendsContainer = Container(
-        child: Text("Add Some Friends!"),
+        child: Text("Add Some Friends!",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       );
       hasLoaded = true;
+      setState(() {});
       return;
     }
 

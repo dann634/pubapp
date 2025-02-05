@@ -37,52 +37,55 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
 
-      body: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 25,
-          vertical: 20,
-        ),
-        color: DEFAULT_BLACK,
-        alignment: Alignment.center,
-        child: Column(
-          spacing: 30,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height - 100,
+          padding: EdgeInsets.symmetric(
+            horizontal: 25,
+            vertical: 20,
+          ),
+          color: DEFAULT_BLACK,
+          alignment: Alignment.center,
+          child: Column(
+            spacing: 30,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
 
-            getTitleText("Login"),
+              getTitleText("Login"),
 
-            getInputField("Username", usernameController, false),
-            getInputField("Password", passwordController, true),
+              getInputField("Username", usernameController, false),
+              getInputField("Password", passwordController, true),
 
-            Offstage(
-              offstage: _hideError,
-              child: Text("Error: $_errorMsg",
-                style: TextStyle(
-                  color: DEFAULT_RED,
-                ),
-              ),
-            ),
-
-            Column(
-              spacing: 10,
-              children: [
-                getButton("Login", DEFAULT_ORANGE, login_attempt, context),
-
-                Text("or",
+              Offstage(
+                offstage: _hideError,
+                child: Text("Error: $_errorMsg",
                   style: TextStyle(
-                    color: DEFAULT_WHITE,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    color: DEFAULT_RED,
                   ),
                 ),
+              ),
 
-                getButton("Register", Colors.deepOrangeAccent, goToRegisterPage, context),
-              ],
-            )
+              Column(
+                spacing: 10,
+                children: [
+                  getButton("Login", DEFAULT_ORANGE, login_attempt, context),
 
-          ],
+                  Text("or",
+                    style: TextStyle(
+                      color: DEFAULT_WHITE,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  getButton("Register", Colors.deepOrangeAccent, goToRegisterPage, context),
+                ],
+              )
+
+            ],
+          ),
         ),
-      ),
+      )
 
     );
   }
@@ -142,8 +145,13 @@ class _LoginPageState extends State<LoginPage> {
 
     }
 
-    void goToRegisterPage() {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterPage()));
+    void goToRegisterPage() async {
+      final isRegisterSuccessful = await Navigator.push<bool>(context, MaterialPageRoute(builder: (context) => RegisterPage()));
+      try {
+        if(isRegisterSuccessful as bool) {
+            Navigator.pop(context); //Skip Login
+        }
+      } catch(e) {}
     }
 
 
@@ -186,52 +194,53 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
 
       appBar: getDefaultAppBar(context),
-      body: Container(
-        alignment: Alignment.center,
-        color: DEFAULT_BLACK,
-        padding: EdgeInsets.symmetric(
-          vertical: 10,
-          horizontal: 25,
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height - 200,
+            alignment: Alignment.center,
+            color: DEFAULT_BLACK,
+            padding: EdgeInsets.symmetric(
+              vertical: 10,
+              horizontal: 25,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 20,
+              children: [
+                getTitleText("Register"),
+
+                getInputField("Username", usernameController, false),
+                getInputField("Full Name", fullNameController, false),
+                getInputField("Password", passwordController, true),
+                getInputField("Confirm Password", confirmPasswordController, true),
+
+                Offstage(
+                  offstage: _hideError,
+                  child: Text("Error: $_errorMsg",
+                    style: TextStyle(
+                      color: DEFAULT_RED,
+                    ),
+                  ),
+                ),
+
+
+
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 40),
+                  child: Text("By clicking register you are declaring you are at least 18 years of age",
+                    style: TextStyle(
+                      color: DEFAULT_WHITE,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                getButton("Register", DEFAULT_ORANGE, register_btn, context),
+
+              ],
+            )
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 20,
-          children: [
-            getTitleText("Register"),
-
-            getInputField("Username", usernameController, false),
-            getInputField("Full Name", fullNameController, false),
-            getInputField("Password", passwordController, true),
-            getInputField("Confirm Password", confirmPasswordController, true),
-
-            Offstage(
-              offstage: _hideError,
-              child: Text("Error: $_errorMsg",
-                style: TextStyle(
-                  color: DEFAULT_RED,
-                ),
-              ),
-            ),
-
-
-
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: Text("By clicking register you are declaring you are at least 18 years of age",
-                style: TextStyle(
-                  color: DEFAULT_WHITE,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            getButton("Register", DEFAULT_ORANGE, register_btn, context),
-
-
-
-          ],
-        )
-      ),
+      )
 
     );
   }
@@ -257,7 +266,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
 
     //Register Successful
-    Navigator.pop(context);
+    Navigator.pop(context, true);
 
   }
 

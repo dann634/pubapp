@@ -12,7 +12,7 @@ String? username;
 String? fullName;
 bool? isAvailable;
 
-Map<String, String> headers = {
+final Map<String, String> headers = {
   'Content-Type': 'application/json',
   "Authorization": "",
 };
@@ -138,7 +138,7 @@ Future<Map<String, dynamic>?> getProfile() async {
 
   final url = "$HOST/me";
 
-  final response = await handleGETRequest(url);
+  final response = await handleGETRequest(url, headers);
 
   if(response.statusCode != 200) {
     return null;
@@ -157,7 +157,7 @@ Future<Map<String, dynamic>?> getProfile() async {
 Future<List?> getFriends() async {
 
 
-  final response = await handleGETRequest("$HOST/me/friends");
+  final response = await handleGETRequest("$HOST/me/friends", headers);
 
   if(response.statusCode != 200) {
     return null;
@@ -173,7 +173,7 @@ Future<List?> getFriendRequests() async {
 
   final url = "$HOST/me/friends/requests";
 
-  final response = await handleGETRequest(url);
+  final response = await handleGETRequest(url, headers);
 
   if(response.statusCode != 200) {
     return null;
@@ -225,10 +225,10 @@ Future<void> setAvailability(value) async {
     "is_available" : value
   };
 
-  final response = await handlePOSTRequest(url, data);
+  await handlePOSTRequest(url, data);
 }
 
-Future<void> addDrinksToProfile(double units, Map<String, int> drinkTypes) async {
+Future<void> addDrinksToProfile(List<double> units, List<String> drinkTypes) async {
   final url = "$HOST/me/drinks/add";
 
   final data = {
@@ -240,8 +240,23 @@ Future<void> addDrinksToProfile(double units, Map<String, int> drinkTypes) async
 }
 
 
+Future<double> getUnits(String time_frame) async {
+  final url = "$HOST/me/drinks/units?time_frame=$time_frame";
 
-Future<http.Response> handleGETRequest(uri) async {
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode != 200) {
+    return -1;
+  }
+
+  final units = jsonDecode(response.body);
+
+  return double.parse(units);
+}
+
+
+
+Future<http.Response> handleGETRequest(uri, localHeaders) async {
 
   final url = Uri.parse(uri);
 
@@ -249,7 +264,7 @@ Future<http.Response> handleGETRequest(uri) async {
 
   response = await http.get(
       url,
-      headers: headers,
+      headers: localHeaders,
   );
 
   if(response.statusCode == 401 || response.statusCode == 422) {
@@ -258,12 +273,14 @@ Future<http.Response> handleGETRequest(uri) async {
 
     response = await http.get(
       url,
-      headers: headers,
+      headers: localHeaders,
     );
 
   }
   return response;
 }
+
+
 
 Future<http.Response> handlePOSTRequest(uri, data) async {
 

@@ -15,7 +15,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  String? dayCount;
+  String? unitCount;
+  double? unitCountNumber;
 
   bool isGoingOut = false;
   bool hasLoaded = false;
@@ -24,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     updateAvailabilityStatus();
+    updateUnits();
   }
 
   void updateAvailabilityStatus() async {
@@ -34,6 +36,14 @@ class _HomePageState extends State<HomePage> {
     isGoingOut = data["isAvailable"] != 0;
     hasLoaded = true;
     setState(() {});
+  }
+
+  void updateUnits() async {
+    getUnits("month").then((value){
+      unitCountNumber = value;
+      unitCount = value.toString();
+      setState(() {});
+    });
   }
 
 
@@ -51,22 +61,35 @@ class _HomePageState extends State<HomePage> {
           spacing: 5,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("You've been out",
+
+            SizedBox(
+              height: 70,
+            ),
+
+            Text("You've had",
               style: TextStyle(
                 fontSize: 20
               ),
             ),
 
-            Text(dayCount ?? "0",
+            Text(unitCount ?? "0",
               style: TextStyle(
                   fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            Text("times this month",
+            Text("units in the last month",
               style: TextStyle(
                   fontSize: 20
+              ),
+            ),
+
+            SizedBox(height: 10,),
+
+            Text("That's an average of " + ((unitCountNumber ?? 0) / 31).toStringAsPrecision(2) + " units per day!",
+              style: TextStyle(
+                color: DEFAULT_GREY
               ),
             ),
 
