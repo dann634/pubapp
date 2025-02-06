@@ -12,10 +12,13 @@ String? username;
 String? fullName;
 bool? isAvailable;
 
+
 final Map<String, String> headers = {
   'Content-Type': 'application/json',
   "Authorization": "",
 };
+
+
 
 // Fetch data from the API
 Future<bool> refreshAccessToken() async {
@@ -134,7 +137,19 @@ Future<bool> login(String username, String password) async {
   return true;
 }
 
-Future<Map<String, dynamic>?> getProfile() async {
+Future<void> logout() async {
+  final url = "$HOST/logout";
+
+  String? refresh_token = await secureStorage.read(key: "refreshToken");
+
+  final data = {
+    "refresh_token" : refresh_token
+  };
+
+  await handlePOSTRequest(url, data);
+}
+
+Future<List<dynamic>?> getProfile() async {
 
   final url = "$HOST/me";
 
@@ -147,9 +162,9 @@ Future<Map<String, dynamic>?> getProfile() async {
   // Parse the JSON response into a Map and return it
   final data = jsonDecode(response.body);
 
-  username = data["username"];
-  fullName = data["fullname"];
-  isAvailable = data["isAvailable"] != 0;
+  username = data[0];
+  fullName = data[1];
+  isAvailable = data[2] != 0;
 
   return data;
 }
@@ -249,9 +264,38 @@ Future<double> getUnits(String time_frame) async {
     return -1;
   }
 
+
   final units = jsonDecode(response.body);
 
   return double.parse(units);
+}
+
+Future<Map<String, dynamic>> getDrinkList() async {
+  final url = "$HOST/me/drinks";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode != 200) {
+    return {};
+  }
+
+  final map = jsonDecode(response.body);
+
+  return map;
+}
+
+Future<int> getFriendCount() async {
+  final url = "$HOST/me/friends/count";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode != 200) {
+    return 0;
+  }
+
+  final value = jsonDecode(response.body);
+
+  return value;
 }
 
 
@@ -274,7 +318,7 @@ Future<http.Response> handleGETRequest(uri, localHeaders) async {
     response = await http.get(
       url,
       headers: localHeaders,
-    );
+    ).timeout(Duration(seconds: 5));
 
   }
   return response;
@@ -300,7 +344,7 @@ Future<http.Response> handlePOSTRequest(uri, data) async {
       url,
       headers: headers,
       body: jsonEncode(data),
-    );
+    ).timeout(Duration(seconds: 5));
   }
   return response;
 }

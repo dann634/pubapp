@@ -3,16 +3,7 @@ import 'package:flutter/services.dart';
 import 'utils.dart';
 import 'connection.dart';
 
-class DrinksScreen extends StatefulWidget {
-  const DrinksScreen({super.key});
-
-  @override
-  State<DrinksScreen> createState() => _DrinksScreenState();
-}
-
-class _DrinksScreenState extends State<DrinksScreen> {
-
-  List<Drink> allDrinks = [
+List<Drink> allDrinks = [
   // Beers
   Drink("Budweiser", 2.84, "Beer"),
   Drink("Heineken", 2.84, "Beer"),
@@ -53,7 +44,18 @@ class _DrinksScreenState extends State<DrinksScreen> {
   Drink("Sambuca", 0.95, "Other"),
   Drink("Baileys Irish Cream", 0.43, "Other"),
   Drink("Jägermeister", 0.88, "Other"),
-  ];
+];
+
+class DrinksScreen extends StatefulWidget {
+  const DrinksScreen({super.key});
+
+  @override
+  State<DrinksScreen> createState() => _DrinksScreenState();
+}
+
+class _DrinksScreenState extends State<DrinksScreen> {
+
+
 
   List<TextEditingController> textControllers = List<TextEditingController>.empty(growable: true);
   List<DrinkTypeRow> tiles = List<DrinkTypeRow>.empty(growable: true);

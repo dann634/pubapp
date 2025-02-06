@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:pubapp/connection.dart';
 import 'package:pubapp/utils.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -12,6 +11,8 @@ import 'friends.dart';
 import 'map.dart';
 import 'profile.dart';
 import 'drinks.dart';
+import 'connection.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -67,9 +68,10 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
 
+  int currentIndex = 2;
+
   bool? isLoginNeeded; // Use nullable bool to handle loading state.
 
-  int _currentIndex = 2;
 
   final List<Widget> _pages = [
     MapScreen(),
@@ -81,7 +83,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onTabTapped(int index) {
     setState(() {
-      _currentIndex = index;
+      currentIndex = index;
     });
   }
 
@@ -93,23 +95,25 @@ class _MainScreenState extends State<MainScreen> {
       if(isLoginNeeded!) {
         Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
       } else {
-        //Get profile
         final profile_data = await getProfile();
 
         if(profile_data == null) {
           Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
         }
       }
+
     });
   }
 
   Future<void> _checkLoginStatus() async {
+
     bool doesRefreshTokenExist = await _doesRefreshTokenExist();
     isLoginNeeded = !doesRefreshTokenExist;
 
-    // //Try get access token
+    //Try get access token
     if(doesRefreshTokenExist) {
       bool isRefreshTokenValid = await refreshAccessToken();
+      print("$isRefreshTokenValid refresh token");
       isLoginNeeded = !isRefreshTokenValid;
     }
 
@@ -127,14 +131,14 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     // Show a loading indicator while determining login status.
     return Scaffold(
-      body: _pages[_currentIndex],
+      body: _pages[currentIndex],
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
           splashFactory: NoSplash.splashFactory,
           highlightColor: Colors.transparent,
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+          currentIndex: currentIndex,
           onTap: _onTabTapped,
           type: BottomNavigationBarType.fixed,
           backgroundColor: Color.fromRGBO(18, 18, 18, 1),
@@ -151,7 +155,7 @@ class _MainScreenState extends State<MainScreen> {
                 "assets/icons/friends.svg",
                 width: 20,
                 height: 25,
-                color: _currentIndex == 1
+                color: currentIndex == 1
                     ? Colors.white // Selected color
                     : Color.fromRGBO(100, 100, 100, 1), // Unselected color
               ),

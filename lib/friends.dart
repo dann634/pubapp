@@ -41,7 +41,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         onRefresh: loadFriendsList,
         child: SingleChildScrollView(
           child: Container(
-            height: MediaQuery.of(context).size.height - 150,
+            height: MediaQuery.of(context).size.height- 100,
             alignment: Alignment.center,
             padding: EdgeInsets.symmetric(
                 vertical: 15,
@@ -96,7 +96,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         break;
       }
 
-      Friend friend = Friend(friend_data["username"], friend_data["fullname"], friend_data["isAvailable"] != 0);
+      Friend friend = Friend(friend_data[0], friend_data[1], friend_data[2] != 0);
       friends.add(friend);
 
       Container row = getFriendEntry(friend);
@@ -385,6 +385,13 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
+
+                      //Friend request can't be same as username
+                      if(inputField.text == username) {
+                        _errorMsg = "Can't add yourself";
+                        _showErrorMessage();
+                      }
+
                       bool addedSuccessfully = await sendFriendRequest(inputField.text);
                       if(!addedSuccessfully) {
                         _errorMsg = "User not found";

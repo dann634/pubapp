@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'utils.dart';
 import 'connection.dart';
+import 'localStorage.dart';
 
 
 
@@ -29,21 +30,42 @@ class _HomePageState extends State<HomePage> {
   }
 
   void updateAvailabilityStatus() async {
+
+    bool? value = await getAvailability();
+
+    if(value != null) {
+      isGoingOut = value;
+      hasLoaded = true;
+      setState(() {});
+      return;
+      //Saves calling the api
+    }
+
     final data = await getProfile();
     if(data == null) {
       return;
     }
-    isGoingOut = data["isAvailable"] != 0;
+    isGoingOut = data[2] != 0;
     hasLoaded = true;
+    saveAvailability(isGoingOut);
     setState(() {});
   }
 
   void updateUnits() async {
-    getUnits("month").then((value){
-      unitCountNumber = value;
-      unitCount = value.toString();
+
+    double? local_units = await getMonthlyUnits(); //Last value stored on disk
+    if(local_units != null) {
+      unitCountNumber = local_units;
+      unitCount = local_units.toString();
       setState(() {});
-    });
+    }
+
+    double units = await getUnits("month"); //API request for most recent number
+
+    unitCountNumber = units;
+    unitCount = units.toString();
+    saveMonthlyUnits(unitCountNumber ?? 0);
+    setState(() {});
   }
 
 
@@ -105,6 +127,7 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 isGoingOut = !isGoingOut;
                 setAvailability(isGoingOut);
+                saveAvailability(isGoingOut);
                 setState(() {
 
                 });
