@@ -261,7 +261,7 @@ Future<double> getUnits(String time_frame) async {
   final response = await handleGETRequest(url, headers);
 
   if(response.statusCode != 200) {
-    return -1;
+    return 0;
   }
 
 
@@ -296,6 +296,19 @@ Future<int> getFriendCount() async {
   final value = jsonDecode(response.body);
 
   return value;
+}
+
+Future<List<dynamic>> getLeaderboard() async {
+  final url = "$HOST/me/friends/rankings";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode != 200) {
+    return [];
+  }
+
+  final units = jsonDecode(response.body);
+  return units;
 }
 
 

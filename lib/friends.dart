@@ -87,7 +87,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       return;
     }
 
-    friendEntries.add(Divider(color: Colors.grey));
+    friendEntries.add(Divider(color: DEFAULT_GREY));
 
     for(int i = 0; i < friendsList.length; i++) {
 
@@ -101,7 +101,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
       Container row = getFriendEntry(friend);
       friendEntries.add(row);
-      friendEntries.add(Divider(color: Colors.grey));
+      friendEntries.add(Divider(color: DEFAULT_GREY));
 
     }
 

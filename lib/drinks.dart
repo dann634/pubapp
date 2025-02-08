@@ -55,7 +55,8 @@ class DrinksScreen extends StatefulWidget {
 
 class _DrinksScreenState extends State<DrinksScreen> {
 
-
+  String _selectedTime = "Week";
+  List<Widget> leaderboardWidgets = List<Widget>.empty(growable: true);
 
   List<TextEditingController> textControllers = List<TextEditingController>.empty(growable: true);
   List<DrinkTypeRow> tiles = List<DrinkTypeRow>.empty(growable: true);
@@ -176,12 +177,179 @@ class _DrinksScreenState extends State<DrinksScreen> {
   }
 
 
-
-
   @override
   void initState() {
     super.initState();
     getExpansionWidgets();
+    loadLeaderboard();
+  }
+
+  void loadLeaderboard() async {
+
+    leaderboardWidgets.clear();
+
+    Map<String, List<dynamic>> friendMap = {};
+    final data = await getLeaderboard(); //Get all friend data
+
+    Map<String, int> monthMap = {
+      "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+      "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+    };
+
+
+    DateTime currentTime = DateTime.now();
+    DateTime? cutoffTime;
+    switch(_selectedTime) {
+      case "Day":
+        cutoffTime = currentTime.subtract(Duration(days: 1));
+        break;
+      case "Week":
+        cutoffTime = currentTime.subtract(Duration(days: 7));
+        break;
+      case "Month":
+        cutoffTime = currentTime.subtract(Duration(days: 31));
+        break;
+      case "Year":
+        cutoffTime = currentTime.subtract(Duration(days : 365));
+        break;
+    }
+
+    for(int i = 0; i < data.length; i++) {
+      final entry = data[i];
+
+      //Format Time
+      final splitDate = entry[3].toString().split(" ");
+      final day = int.parse(splitDate[1]);
+      final month = monthMap[splitDate[2]] ?? 0;
+      final year = int.parse(splitDate[3]);
+      final splitTime = splitDate[4].split(":");
+      final hour = int.parse(splitTime[0]);
+      final minute = int.parse(splitTime[1]);
+      final second = int.parse(splitTime[2]);
+      DateTime date = DateTime(year, month, day, hour, minute, second);
+
+      if(date.isBefore(cutoffTime!)) {
+        continue;
+      }
+
+      String username = entry[0];
+      double units = double.parse(entry[2]);
+      if(friendMap[username] == null) {
+        String fullname = entry[1];
+        friendMap[username] = [fullname, units];
+      } else {
+        friendMap[username]![1] += units;
+      }
+    }
+
+    if(data.isEmpty) {
+      leaderboardWidgets.add(Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("Wait for your friends to add some drinks!",
+            style: TextStyle(
+              fontSize: 18,
+            ),
+          )
+        ],
+      ));
+      setState(() {});
+      return;
+    }
+
+    //Add Me to List
+    final user_units = await getUnits(_selectedTime.toLowerCase());
+    if(username != null) {
+      friendMap[username!] = [fullName, user_units];
+    }
+
+    //Order friends
+    List<String> rankings = List<String>.empty(growable: true);
+    for (var key in friendMap.keys) {
+      double units = friendMap[key]![1];
+
+      if (rankings.isEmpty) {
+        // Add the first element when the list is empty
+        rankings.add(key);
+      } else {
+        bool inserted = false; // Flag to track if we inserted the key
+        for (int counter = 0; counter < rankings.length; counter++) {
+          // Check if the units of the current friend are greater or equal to the units of the key
+          if (friendMap[rankings[counter]]![1] <= units) {
+            rankings.insert(counter, key); // Insert the key in the correct position
+            inserted = true; // Set the flag to true once the key is inserted
+            break; // Break out of the loop since we have inserted the key
+          }
+        }
+
+        // If the key was not inserted (meaning it should go at the end), add it at the last position
+        if (!inserted) {
+          rankings.add(key);
+        }
+      }
+    }
+
+    leaderboardWidgets.add(Divider(color: Colors.white24));
+    for(int i = 0; i < rankings.length; i++) {
+      String username = rankings[i];
+      final data = friendMap[username];
+      double units = data![1];
+      leaderboardWidgets.add(Container(
+
+          padding: EdgeInsets.symmetric(horizontal: 10),
+
+          child : Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+
+              Row(
+                spacing: 20,
+                children: [
+                  Text("${i+1}.",
+                    style: TextStyle(
+                        fontSize: 17
+                    ),
+
+                  ),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(username,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      Text(data[0],
+                        style: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              Text("${units.toStringAsFixed(2)} units",
+                style: TextStyle(
+                  fontSize: 17,
+                ),
+              )
+
+
+            ],
+          )
+      ));
+      leaderboardWidgets.add(Divider(color: Colors.white24));
+    }
+
+
+
+
+    setState(() {});
+    //Only show friend data
   }
 
   @override
@@ -321,7 +489,34 @@ class _DrinksScreenState extends State<DrinksScreen> {
                       ),
                     ),
 
-                    Container(),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 10
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+
+                              getTimeChangeButton("Day"),
+                              getTimeChangeButton("Week"),
+                              getTimeChangeButton("Month"),
+                              getTimeChangeButton("Year"),
+
+
+
+                            ],
+                          ),
+
+                          SingleChildScrollView(
+                            child: Column(
+                              children: leaderboardWidgets,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
 
                   ],
                 ),
@@ -330,6 +525,31 @@ class _DrinksScreenState extends State<DrinksScreen> {
           )
         )
       ),
+    );
+  }
+
+  TextButton getTimeChangeButton(String time) {
+    return TextButton(
+      onPressed: () {
+        _selectedTime = time;
+        loadLeaderboard();
+      },
+
+      style: TextButton.styleFrom(
+        backgroundColor: _selectedTime == time ? Colors.white70 : Colors.grey[600],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10)
+        ),
+        fixedSize: Size.fromWidth(75)
+      ),
+
+      child: Text(time,
+        style: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
     );
   }
 
