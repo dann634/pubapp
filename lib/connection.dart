@@ -311,6 +311,19 @@ Future<List<dynamic>> getLeaderboard() async {
   return units;
 }
 
+Future<dynamic> getLeaderboardRank() async {
+  final url = "$HOST/me/ranking";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode != 200) {
+    return -1;
+  }
+
+  final value = jsonDecode(response.body);
+  return value;
+}
+
 
 
 Future<http.Response> handleGETRequest(uri, localHeaders) async {

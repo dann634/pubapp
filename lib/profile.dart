@@ -21,6 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   int drinkTotal = 0;
   int friendTotal = 0;
+  String rank = "-";
 
   bool hasLoaded = false;
 
@@ -43,6 +44,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     int? localFriendCount = await getLocalFriendCount();
     if(localFriendCount != null) {
       friendTotal = localFriendCount;
+    }
+
+    int? localRank = await getLeaderboardRank();
+    if(localRank != -1) {
+      rank = localRank.toString();
     }
 
     setState(() {});
@@ -171,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     Column(
                       children: [
-                        getProfileNumber("#-"),
+                        getProfileNumber("#$rank"),
                         Text("Rank")
                       ],
 

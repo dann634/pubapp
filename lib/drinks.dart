@@ -46,6 +46,11 @@ List<Drink> allDrinks = [
   Drink("Jägermeister", 0.88, "Other"),
 ];
 
+//Only generate them once
+List<DrinkTypeRow> tiles = List<DrinkTypeRow>.empty(growable: true);
+List<TextEditingController> textControllers = List.generate(allDrinks.length, (_) => TextEditingController());
+
+
 class DrinksScreen extends StatefulWidget {
   const DrinksScreen({super.key});
 
@@ -58,130 +63,121 @@ class _DrinksScreenState extends State<DrinksScreen> {
   String _selectedTime = "Week";
   List<Widget> leaderboardWidgets = List<Widget>.empty(growable: true);
 
-  List<TextEditingController> textControllers = List<TextEditingController>.empty(growable: true);
-  List<DrinkTypeRow> tiles = List<DrinkTypeRow>.empty(growable: true);
-
-  void getExpansionWidgets() {
-    List<List<Widget>> list = List<List<Widget>>.empty(growable: true);
-
-    String category = allDrinks[0].type;
-    List<Widget> subList = List<Widget>.empty(growable: true);
-
-    for(int i = 0; i < allDrinks.length; i++) {
-
-      final drink = allDrinks[i];
-      if(category != drink.type) {
-        list.add(subList);
-
-        // Add a new DrinkTypeRow for the previous category
-        tiles.add(DrinkTypeRow(header: category, content: subList));
-
-        // Reset for the new category
-        category = drink.type;
-        subList = List<Widget>.empty(growable: true);
-      }
-
-      final textController = TextEditingController();
-      subList.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(drink.name, style: TextStyle(color: DEFAULT_WHITE)),
-                  Text("${drink.units} units", style: TextStyle(color: DEFAULT_GREY)),
-                ],
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-
-                      String currentText = textController.text;
-                      if(currentText.isNotEmpty) {
-                        int currentNumber = int.parse(currentText);
-                        if(currentNumber > 0) {
-                          textController.text = (currentNumber - 1).toString();
-                        }
-                      }
-
-                    },
-                    icon: Icon(Icons.remove, color: DEFAULT_WHITE),
-                  ),
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: TextField(
-                      controller: textController,
-                      keyboardType: TextInputType.number,  // Numbers only
-                      textAlign: TextAlign.center,
-                      textAlignVertical: TextAlignVertical.center, // Vertically center the text
-
-                      style: TextStyle(
-                        color: DEFAULT_WHITE,
-                        fontSize: 15,
-                      ), // Text color
-
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide: BorderSide(color: DEFAULT_GREY), // Default border color
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide: BorderSide(color: DEFAULT_GREY), // Default border color
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide: BorderSide(color: DEFAULT_WHITE, width: 2), // White focused border
-                        ),
-                        contentPadding: EdgeInsets.only(bottom: 10), // Adjust for vertical centering
-                      ),
-
-                      cursorColor: DEFAULT_WHITE, // White cursor
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Restrict input to numbers only
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      String currentText = textController.text;
-                      if(currentText.isEmpty) {
-                        textController.text = "1";
-                      } else {
-                        int newNumber = int.parse(currentText) + 1;
-                        textController.text = newNumber.toString();
-                      }
-                    },
-                    icon: Icon(Icons.add, color: DEFAULT_WHITE),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-
-      textControllers.add(textController);
-
-
-    }
-    list.add(subList);
-
-    // Add a new DrinkTypeRow for the previous category
-    tiles.add(DrinkTypeRow(header: category, content: subList));
-
-
-  }
-
 
   @override
   void initState() {
     super.initState();
-    getExpansionWidgets();
-    loadLeaderboard();
+    _generateDrinkTiles();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadLeaderboard();
+    });
+  }
+
+  void _generateDrinkTiles() {
+    // Group drinks by category using a map for O(n) efficiency
+    final Map<String, List<Drink>> drinksByCategory = {};
+    for (final drink in allDrinks) {
+      drinksByCategory.putIfAbsent(drink.type, () => []).add(drink);
+    }
+
+    // Create DrinkTypeRow widgets
+
+    if(tiles.isNotEmpty) {
+      return;
+    }
+
+    for (final category in drinksByCategory.keys) {
+      final drinks = drinksByCategory[category]!;
+      final drinkWidgets = drinks.map((drink) => _buildDrinkRow(drink)).toList();
+      tiles.add(DrinkTypeRow(header: category, content: drinkWidgets));
+    }
+  }
+
+  Widget _buildDrinkRow(Drink drink) {
+    final textController = textControllers[allDrinks.indexOf(drink)]; // Use index to get correct controller
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Container(
+            width: 150,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(drink.name,
+                    overflow: TextOverflow.clip,
+                    style: const TextStyle(color: DEFAULT_WHITE)
+                ),
+                Text("${drink.units} units", style: const TextStyle(color: DEFAULT_GREY)),
+              ],
+            ),
+          ),
+          Spacer(),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  _decrementDrinkCount(textController);
+                },
+                icon: const Icon(Icons.remove, color: DEFAULT_WHITE),
+              ),
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: TextField(
+                  controller: textController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: const TextStyle(color: DEFAULT_WHITE, fontSize: 15),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: const BorderSide(color: DEFAULT_GREY),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: const BorderSide(color: DEFAULT_GREY),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: const BorderSide(color: DEFAULT_WHITE, width: 2),
+                    ),
+                    contentPadding: const EdgeInsets.only(bottom: 10),
+                  ),
+                  cursorColor: DEFAULT_WHITE,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  _incrementDrinkCount(textController);
+                },
+                icon: const Icon(Icons.add, color: DEFAULT_WHITE),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _decrementDrinkCount(TextEditingController controller) {
+    if (controller.text.isNotEmpty) {
+      int currentNumber = int.parse(controller.text);
+      if (currentNumber > 0) {
+        controller.text = (currentNumber - 1).toString();
+      }
+    }
+  }
+
+  void _incrementDrinkCount(TextEditingController controller) {
+    if (controller.text.isEmpty) {
+      controller.text = "1";
+    } else {
+      int newNumber = int.parse(controller.text) + 1;
+      controller.text = newNumber.toString();
+    }
   }
 
   void loadLeaderboard() async {
@@ -438,6 +434,7 @@ class _DrinksScreenState extends State<DrinksScreen> {
                             ),
                           ),
 
+
                           TextButton(
                             onPressed: () async {
 
@@ -528,7 +525,9 @@ class _DrinksScreenState extends State<DrinksScreen> {
     );
   }
 
+
   TextButton getTimeChangeButton(String time) {
+    double width = MediaQuery.of(context).size.width;
     return TextButton(
       onPressed: () {
         _selectedTime = time;
@@ -540,13 +539,14 @@ class _DrinksScreenState extends State<DrinksScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10)
         ),
-        fixedSize: Size.fromWidth(75)
+        fixedSize: Size.fromWidth(width * 0.18),
       ),
 
       child: Text(time,
         style: TextStyle(
           color: Colors.black,
           fontWeight: FontWeight.bold,
+          fontSize: width * 0.035,
         ),
       ),
 

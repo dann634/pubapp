@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pubapp/utils.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -101,8 +102,8 @@ class _MainScreenState extends State<MainScreen> {
           Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
         }
       }
-
     });
+
   }
 
   Future<void> _checkLoginStatus() async {
@@ -147,22 +148,15 @@ class _MainScreenState extends State<MainScreen> {
           iconSize: 25,
           items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.location_on),
-              label: 'Map',
+              icon: Icon(Icons.event),
+              label: 'Event',
             ),
             BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                "assets/icons/friends.svg",
-                width: 20,
-                height: 25,
-                color: currentIndex == 1
-                    ? Colors.white // Selected color
-                    : Color.fromRGBO(100, 100, 100, 1), // Unselected color
-              ),
+              icon: Icon(Icons.people_alt_outlined),
               label: 'Friends',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
+              icon: Icon(Icons.home_outlined),
               label: 'Home',
             ),
             BottomNavigationBarItem(
@@ -170,7 +164,7 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Drinks',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person),
+              icon: Icon(Icons.person_outline),
               label: 'Profile',
             ),
           ],
@@ -181,6 +175,9 @@ class _MainScreenState extends State<MainScreen> {
 
 
   }
+
+
+
 
 }
 
