@@ -9,7 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'login.dart';
 import 'home.dart';
 import 'friends.dart';
-import 'map.dart';
+import 'event.dart';
 import 'profile.dart';
 import 'drinks.dart';
 import 'connection.dart';
@@ -72,10 +72,11 @@ class _MainScreenState extends State<MainScreen> {
   int currentIndex = 2;
 
   bool? isLoginNeeded; // Use nullable bool to handle loading state.
+  bool isLoading = true;
 
 
   final List<Widget> _pages = [
-    MapScreen(),
+    EventScreen(),
     FriendsScreen(),
     HomePage(),
     DrinksScreen(),
@@ -91,6 +92,10 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    loadRequiredPage();
+  }
+
+  void loadRequiredPage() {
     _checkLoginStatus().then((value) async {
       // Show appropriate page once login status is determined.
       if(isLoginNeeded!) {
@@ -102,8 +107,9 @@ class _MainScreenState extends State<MainScreen> {
           Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
         }
       }
+      isLoading = false;
+      setState(() {});
     });
-
   }
 
   Future<void> _checkLoginStatus() async {
@@ -114,7 +120,6 @@ class _MainScreenState extends State<MainScreen> {
     //Try get access token
     if(doesRefreshTokenExist) {
       bool isRefreshTokenValid = await refreshAccessToken();
-      print("$isRefreshTokenValid refresh token");
       isLoginNeeded = !isRefreshTokenValid;
     }
 
@@ -131,7 +136,44 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     // Show a loading indicator while determining login status.
-    return Scaffold(
+    return isLoading ? Container(
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 30,
+        children: [
+          CircularProgressIndicator(color: Colors.white),
+          Text("Connecting to server...",
+
+            style: TextStyle(
+              fontSize: 17,
+              decoration: TextDecoration.none
+            ),
+          ),
+
+          TextButton(
+            onPressed: () {
+              loadRequiredPage();
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: DEFAULT_WHITE,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)
+              ),
+              fixedSize: Size(MediaQuery.of(context).size.width*0.7, 50)
+            ),
+            child: Text("Retry",
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          )
+        ],
+      ),
+    )
+
+    : Scaffold(
       body: _pages[currentIndex],
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(

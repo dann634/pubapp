@@ -42,6 +42,26 @@ Future<int?> getLocalFriendCount() async {
   return prefs.getInt('friend_count'); // Returns null if not set
 }
 
+Future<void> saveEventId(int eventId) async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setInt("eventId", eventId);
+}
+
+Future<int?> getEventId() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('eventId'); // Returns null if not set
+}
+
+Future<void> saveEventLastAccess(String time) async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString("last_request", time);
+}
+
+Future<String?> getEventLastAccess() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getString('last_request'); // Returns null if not set
+}
+
 
 
 

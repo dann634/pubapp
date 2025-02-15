@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // For decoding JSON responses
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'localStorage.dart';
+import 'package:intl/intl.dart';
+
 
 final HOST = "http://ec2-18-134-134-33.eu-west-2.compute.amazonaws.com:5000";
 
@@ -323,6 +326,131 @@ Future<dynamic> getLeaderboardRank() async {
   final value = jsonDecode(response.body);
   return value;
 }
+
+Future<void> updateBACProfile(isAccepted, weight, gender) async {
+  final url = "$HOST/me/bac/add";
+
+  final data = {
+    "isAccepted": isAccepted,
+    "weight" : weight,
+    "gender" : gender
+  };
+
+  final response = await handlePOSTRequest(url, data);
+
+  if(response.statusCode == 201) {
+    //Added successfully
+  }
+}
+
+Future<List<dynamic>> getBACProfile() async {
+  final url = "$HOST/me/bac/profile";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+
+  return [];
+}
+
+Future<void> createEvent() async {
+  final url = "$HOST/me/event/create";
+
+  final response = await handlePOSTRequest(url, {});
+
+  if(response.statusCode == 201) {
+    //Created successfully - store event code in storage
+    final data = jsonDecode(response.body);
+    final eventID = data["eventId"];
+    if(eventID != null) {
+      await saveEventId(int.parse(eventID));
+    }
+  }
+}
+
+Future<bool> joinEvent(eventId) async {
+  final url = "$HOST/me/event/join";
+
+  final data = {
+    "event_id" : eventId
+  };
+
+  final response = await handlePOSTRequest(url, data);
+
+  if(response.statusCode == 404) {
+    //event does not exist
+    return false;
+  }
+
+  if(response.statusCode == 200) {
+    //Created successfully - store event code in storage
+    final data = jsonDecode(response.body);
+    final eventID = data["eventId"];
+    if(eventID != null) {
+      await saveEventId(int.parse(eventID));
+      return true;
+    }
+  }
+  return false;
+}
+
+Future<bool> leaveEvent() async {
+  final url = "$HOST/me/event/leave";
+
+  final response = await handlePOSTRequest(url, {});
+
+  return response.statusCode == 200;
+}
+
+Future<List<dynamic>> getEventDrinkList() async {
+
+  //get last request
+  String? lastRequest = await getEventLastAccess();
+  lastRequest ??= "01-01-2020-12-00-00";
+
+  final url = "$HOST/me/event/drinks/get?last_request=$lastRequest";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    final drinkList = data[0];
+
+    //Set new access time
+    final newTime = data[1];
+    DateTime dateTime = DateTime.parse(newTime);
+    String formattedDate = DateFormat("dd-MM-yyyy-HH-mm-ss").format(dateTime);
+    await saveEventLastAccess(formattedDate);
+
+    return drinkList;
+  }
+
+  return [];
+}
+
+Future<bool> isUserInEvent() async {
+  final url = "$HOST/me/event";
+
+  final response = await handleGETRequest(url, headers);
+
+  return response.statusCode == 200;
+}
+
+Future<List<dynamic>> getEventBACList() async {
+  final url = "$HOST/me/event/bac/get";
+
+  final response = await handleGETRequest(url, headers);
+
+  if(response.statusCode == 200) {
+    final list = jsonDecode(response.body);
+    return list;
+  }
+
+  return [];
+}
+
 
 
 

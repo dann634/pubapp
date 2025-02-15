@@ -5,7 +5,7 @@ import 'utils.dart';
 import 'connection.dart';
 import 'localStorage.dart';
 
-
+bool isFirstLoad = true;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -60,12 +60,18 @@ class _HomePageState extends State<HomePage> {
       setState(() {});
     }
 
+    //On first load get number from server
+    if(!isFirstLoad) {
+      return;
+    }
+
     double units = await getUnits("month"); //API request for most recent number
 
     unitCountNumber = units;
     unitCount = units.toString();
     saveMonthlyUnits(unitCountNumber ?? 0);
     setState(() {});
+    isFirstLoad = false;
   }
 
 

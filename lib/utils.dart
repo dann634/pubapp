@@ -8,8 +8,10 @@ const Color DEFAULT_GREY = Color.fromRGBO(100, 100, 100, 1);
 const Color DEFAULT_RED = Colors.red;
 
 
-AppBar getDefaultAppBar(context) {
+AppBar getDefaultAppBar(context, [String title = ""]) {
   return AppBar(
+    title: Text(title),
+    centerTitle: true,
     toolbarHeight: 55,
     foregroundColor: DEFAULT_WHITE,
     backgroundColor: DEFAULT_BLACK,

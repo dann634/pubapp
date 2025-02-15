@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pubapp/localStorage.dart';
 import 'utils.dart';
 import 'connection.dart';
 
@@ -441,6 +442,7 @@ class _DrinksScreenState extends State<DrinksScreen> {
                               //Get total units and count for each section
                               List<String> drinksList = List<String>.empty(growable: true);
                               List<double> unitsList = List<double>.empty(growable: true);
+                              double totalUnits = 0;
                               for(int i = 0; i < allDrinks.length; i++) {
                                 final textController = textControllers[i];
                                 String text = textController.text;
@@ -453,13 +455,20 @@ class _DrinksScreenState extends State<DrinksScreen> {
                                   for(int j = 0; j < drinkCount; j++) {
                                     drinksList.add(drink.type);
                                     unitsList.add(drink.units);
+                                    totalUnits += drink.units;
                                   }
 
                                 }
                               }
 
                               if(drinksList.isNotEmpty) {
-                                await addDrinksToProfile(unitsList, drinksList);
+                                //Update local record
+                                double? monthlyUnits = await getMonthlyUnits();
+                                if(monthlyUnits != null) {
+                                  await saveMonthlyUnits(monthlyUnits + totalUnits);
+                                }
+                                
+                                await addDrinksToProfile(unitsList, drinksList); //Update server record
                               }
                               //Send data to server to update profile
 
