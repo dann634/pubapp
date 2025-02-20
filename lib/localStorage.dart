@@ -63,5 +63,32 @@ Future<String?> getEventLastAccess() async {
 }
 
 
+Future<void> saveBACProfile(bool isEnabled, double weight, String gender) async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setStringList("bac_profile", [isEnabled.toString(), weight.toString(), gender]);
+}
+
+Future<Map<String, dynamic>> getBACProfile() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final data = prefs.getStringList("bac_profile");
+  if(data != null) {
+    try {
+      return {
+        "isEnabled": bool.parse(data[0]),
+        "weight" : double.parse(data[1]),
+        "gender" : data[2]
+      };
+    } catch(e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+
+
+
+
+
 
 

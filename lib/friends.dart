@@ -188,6 +188,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   final inputField = TextEditingController();
   Column? friendRequestsColumn;
   bool hasLoaded = false;
+  Color msgColor = DEFAULT_RED;
 
   void _showErrorMessage() {
     setState(() {
@@ -388,13 +389,19 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
                       //Friend request can't be same as username
                       if(inputField.text == username) {
-                        _errorMsg = "Can't add yourself";
+                        _errorMsg = "Error: Can't add yourself";
+                        msgColor = DEFAULT_RED;
                         _showErrorMessage();
                       }
 
-                      bool addedSuccessfully = await sendFriendRequest(inputField.text);
-                      if(!addedSuccessfully) {
-                        _errorMsg = "User not found";
+                      final addedSuccessfully = await sendFriendRequest(inputField.text);
+                      if(!addedSuccessfully[0]) {
+                        _errorMsg = "Error: ${addedSuccessfully[1]}";
+                        msgColor = DEFAULT_RED;
+                        _showErrorMessage();
+                      } else {
+                        _errorMsg = "Friend Request Sent!";
+                        msgColor = Colors.green;
                         _showErrorMessage();
                       }
                     },
@@ -418,9 +425,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               ),
               Offstage(
                 offstage: _hideError,
-                child: Text("Error: $_errorMsg",
+                child: Text(_errorMsg,
                   style: TextStyle(
-                    color: DEFAULT_RED,
+                    color: msgColor,
                   ),
                 ),
               ),
@@ -435,3 +442,31 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

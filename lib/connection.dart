@@ -219,7 +219,7 @@ Future<bool> respondToFriendRequest(String friendUsername, bool accept) async {
 }
 
 
-Future<bool> sendFriendRequest(String username) async {
+Future<List<dynamic>> sendFriendRequest(String username) async {
 
   final url = "$HOST/me/friends/add";
 
@@ -228,12 +228,9 @@ Future<bool> sendFriendRequest(String username) async {
   };
 
   final response = await handlePOSTRequest(url, data);
+  final message = jsonDecode(response.body);
 
-  if(response.statusCode == 201) {
-    return true;
-  }
-
-  return false;
+  return [response.statusCode == 201, message["message"]];
 }
 
 Future<void> setAvailability(value) async {
@@ -264,13 +261,18 @@ Future<double> getUnits(String time_frame) async {
   final response = await handleGETRequest(url, headers);
 
   if(response.statusCode != 200) {
-    return 0;
+    return 0.0;
+  }
+
+  final mapData = jsonDecode(response.body);
+
+  final value = mapData["units"];
+  if(value is String) {
+    return double.parse(value);
   }
 
 
-  final units = jsonDecode(response.body);
-
-  return double.parse(units);
+  return mapData["units"];
 }
 
 Future<Map<String, dynamic>> getDrinkList() async {
@@ -348,9 +350,17 @@ Future<List<dynamic>> getBACProfile() async {
 
   final response = await handleGETRequest(url, headers);
 
+  List<dynamic>? list;
+
   if(response.statusCode == 200) {
-    return jsonDecode(response.body);
+    list = jsonDecode(response.body);
+  } else if (response.statusCode == 404){
+    await saveBACProfile(false, -1, "null");
+    return [];
   }
+
+  //Save to local memory
+  await saveBACProfile(list![0], list[1], list[2]);
 
   return [];
 }
@@ -451,6 +461,12 @@ Future<List<dynamic>> getEventBACList() async {
   return [];
 }
 
+Future<void> deleteBACProfile() async {
+  final url = "$HOST/me/bac/delete";
+
+  await handlePOSTRequest(url, headers);
+
+}
 
 
 

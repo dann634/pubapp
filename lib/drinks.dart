@@ -255,9 +255,9 @@ class _DrinksScreenState extends State<DrinksScreen> {
     }
 
     //Add Me to List
-    final user_units = await getUnits(_selectedTime.toLowerCase());
+    double userUnits = await getUnits(_selectedTime.toLowerCase());
     if(username != null) {
-      friendMap[username!] = [fullName, user_units];
+      friendMap[username!] = [fullName, userUnits];
     }
 
     //Order friends

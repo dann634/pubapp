@@ -99,12 +99,14 @@ class _MainScreenState extends State<MainScreen> {
     _checkLoginStatus().then((value) async {
       // Show appropriate page once login status is determined.
       if(isLoginNeeded!) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
       } else {
         final profile_data = await getProfile();
 
         if(profile_data == null) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+        } else {
+          await getBACProfile();
         }
       }
       isLoading = false;
