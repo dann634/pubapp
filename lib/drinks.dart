@@ -47,6 +47,8 @@ List<Drink> allDrinks = [
   Drink("Jägermeister", 0.88, "Other"),
 ];
 
+int MAX_INPUT_VALUE = 5;
+
 //Only generate them once
 List<DrinkTypeRow> tiles = List<DrinkTypeRow>.empty(growable: true);
 List<TextEditingController> textControllers = List.generate(allDrinks.length, (_) => TextEditingController());
@@ -126,6 +128,15 @@ class _DrinksScreenState extends State<DrinksScreen> {
                 width: 40,
                 height: 40,
                 child: TextField(
+                  onChanged: (value) {
+                    print("s");
+                    if(value.isNotEmpty) {
+                      int number = int.parse(value);
+                      if (number > MAX_INPUT_VALUE) {
+                        textController.text = MAX_INPUT_VALUE.toString();
+                      }
+                    }
+                  },
                   controller: textController,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
@@ -177,6 +188,9 @@ class _DrinksScreenState extends State<DrinksScreen> {
       controller.text = "1";
     } else {
       int newNumber = int.parse(controller.text) + 1;
+      if(newNumber > MAX_INPUT_VALUE) {
+        return;
+      }
       controller.text = newNumber.toString();
     }
   }
@@ -457,6 +471,9 @@ class _DrinksScreenState extends State<DrinksScreen> {
                                     unitsList.add(drink.units);
                                     totalUnits += drink.units;
                                   }
+
+                                  //Reset back to 0
+                                  textController.text = "";
 
                                 }
                               }

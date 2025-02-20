@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
     double? local_units = await getMonthlyUnits(); //Last value stored on disk
     if(local_units != null) {
       unitCountNumber = local_units;
-      unitCount = local_units.toString();
+      unitCount = local_units.toStringAsPrecision(4);
       setState(() {});
     }
 
@@ -68,7 +68,7 @@ class _HomePageState extends State<HomePage> {
     double units = await getUnits("month"); //API request for most recent number
 
     unitCountNumber = units;
-    unitCount = units.toString();
+    unitCount = units.toStringAsPrecision(4);
     saveMonthlyUnits(unitCountNumber ?? 0);
     setState(() {});
     isFirstLoad = false;
