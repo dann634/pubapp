@@ -88,6 +88,7 @@ class _EventScreenState extends State<EventScreen> {
                     },
                     onOptOut: () async {
                       await deleteBACProfile();
+                      await saveBACProfile(false, -1, "null");
                       checkProfile(); // Refresh the screen after opting out
                     },
                     onUpdateInfo: (weight, gender) async {
