@@ -60,7 +60,17 @@ void initState() {
 }
 
 Future<void> checkProfile() async {
-  var profile = await getBACProfile();
+  final BACProfile = await getBACProfile();
+  if(BACProfile.length == 0 ){
+
+  }else{
+    if(BACProfile["isEnabled"] == true){
+      //Return Container with the event page
+    }else{
+      //return container with the sign up page
+    }
+  }
+
   debugPrint("Profile Data: $profile");
 
   setState(() {
