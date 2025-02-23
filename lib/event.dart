@@ -369,18 +369,66 @@ class SettingsWidget extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           ListTile(
-            title: const Text("Leave Event"),
+            contentPadding: EdgeInsets.all(0),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  spacing: 15,
+                  children: [
+                    const Icon(Icons.exit_to_app),
+                    const Text("Leave Event")
+                  ],
+                ),
+
+                Icon(Icons.keyboard_arrow_right_outlined)
+              ],
+            ),
             textColor: DEFAULT_WHITE,
+            iconColor: DEFAULT_WHITE,
             onTap: onLeaveEvent,
           ),
           ListTile(
-            title: const Text("Opt Out of Events"),
+            contentPadding: EdgeInsets.all(0),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  spacing: 15,
+                  children: [
+                    const Icon(Icons.block),
+                    const Text("Opt Out of Events")
+                  ],
+                ),
+
+                Icon(Icons.keyboard_arrow_right_outlined)
+              ],
+            ),
             textColor: DEFAULT_WHITE,
+            iconColor: DEFAULT_WHITE,
             onTap: onOptOut,
           ),
           ListTile(
-            title: const Text("Update Info"),
+            contentPadding: EdgeInsets.all(0),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  spacing: 15,
+                  children: [
+                    const Icon(Icons.autorenew),
+                    const Text("Update Info")
+                  ],
+                ),
+
+                Icon(Icons.keyboard_arrow_right_outlined)
+              ],
+            ),
             textColor: DEFAULT_WHITE,
+            iconColor: DEFAULT_WHITE,
             onTap: () {
               Navigator.push(
                 context,
