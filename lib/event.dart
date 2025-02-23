@@ -333,7 +333,8 @@ class JoinCreateEventWidget extends StatelessWidget {
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () async {
-              await createEvent();
+              final eventID =  await createEvent();
+              saveEventId(eventID);
               onJoinOrCreate(); // Refresh the screen
             },
             child: const Text("Create Event"),

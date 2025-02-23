@@ -380,6 +380,7 @@ Future<void> createEvent() async {
     final eventID = data["eventId"];
     if(eventID != null) {
       await saveEventId(int.parse(eventID));
+      return eventID;
     }
   }
 }
