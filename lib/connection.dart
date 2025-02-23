@@ -342,6 +342,7 @@ Future<void> updateBACProfile(isAccepted, weight, gender) async {
 
   if(response.statusCode == 201) {
     //Added successfully
+    print("BAC updated sucsesffuly");
   }
 }
 
@@ -354,17 +355,19 @@ Future<List<dynamic>> getBACProfile() async {
 
   if(response.statusCode == 200) {
     list = jsonDecode(response.body);
+    //print("200");
+
+    //Save to local memory
+    await saveBACProfile(list![0], list[1], list[2]);
 
     return [list![0], list[1], list[2]];
 
   } else if (response.statusCode == 404){
     await saveBACProfile(false, -1, "null");
+    //print(" 404");
     return [];
   }
-
-  //Save to local memory
-  await saveBACProfile(list![0], list[1], list[2]);
-
+  //print("not 200 or 404");
   return [];
 }
 
