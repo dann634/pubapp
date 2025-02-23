@@ -210,7 +210,12 @@ class _OptInWidgetState extends State<OptInWidget> {
           ),
           const SizedBox(height: 20),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const Text(
+                "Enable Event Feature",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
               CupertinoSwitch(
                 value: hasAgreed,
                 onChanged: (value) {
@@ -219,11 +224,7 @@ class _OptInWidgetState extends State<OptInWidget> {
                   });
                 },
               ),
-              const SizedBox(width: 10),
-              const Text(
-                "Enable Event Feature",
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+
             ],
           ),
           const SizedBox(height: 20),
@@ -266,7 +267,7 @@ class _OptInWidgetState extends State<OptInWidget> {
             },
             child: isSubmitting
                 ? const CircularProgressIndicator() // Show loading indicator
-                : const Text("Submit"),
+                : const Text("Submit", style: TextStyle(color: DEFAULT_BLACK),),
           ),
         ],
       ),
@@ -379,18 +380,66 @@ class SettingsWidget extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           ListTile(
-            title: const Text("Leave Event"),
+            contentPadding: EdgeInsets.all(0),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  spacing: 15,
+                  children: [
+                    const Icon(Icons.exit_to_app),
+                    const Text("Leave Event")
+                  ],
+                ),
+
+                Icon(Icons.keyboard_arrow_right_outlined)
+              ],
+            ),
             textColor: DEFAULT_WHITE,
+            iconColor: DEFAULT_WHITE,
             onTap: onLeaveEvent,
           ),
           ListTile(
-            title: const Text("Opt Out of Events"),
+            contentPadding: EdgeInsets.all(0),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  spacing: 15,
+                  children: [
+                    const Icon(Icons.block),
+                    const Text("Opt Out of Events")
+                  ],
+                ),
+
+                Icon(Icons.keyboard_arrow_right_outlined)
+              ],
+            ),
             textColor: DEFAULT_WHITE,
+            iconColor: DEFAULT_WHITE,
             onTap: onOptOut,
           ),
           ListTile(
-            title: const Text("Update Info"),
+            contentPadding: EdgeInsets.all(0),
+
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  spacing: 15,
+                  children: [
+                    const Icon(Icons.autorenew),
+                    const Text("Update Info")
+                  ],
+                ),
+
+                Icon(Icons.keyboard_arrow_right_outlined)
+              ],
+            ),
             textColor: DEFAULT_WHITE,
+            iconColor: DEFAULT_WHITE,
             onTap: () {
               Navigator.push(
                 context,
