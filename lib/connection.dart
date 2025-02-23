@@ -354,6 +354,9 @@ Future<List<dynamic>> getBACProfile() async {
 
   if(response.statusCode == 200) {
     list = jsonDecode(response.body);
+
+    return [list![0], list[1], list[2]];
+
   } else if (response.statusCode == 404){
     await saveBACProfile(false, -1, "null");
     return [];
