@@ -332,11 +332,13 @@ class JoinCreateEventWidget extends StatelessWidget {
               }
             },
 
-            child: const Text("Join Event", style: TextStyle(color: DEFAULT_BLACK),),
+            child: const Text("Join Event", style: TextStyle(color: DEFAULT_BLACK, fontWeight: FontWeight.bold,),),
           ),
           const SizedBox(height: 20,),
           const Text("or",
-
+            style: TextStyle(
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -347,7 +349,7 @@ class JoinCreateEventWidget extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               fixedSize: Size.fromWidth(200)
             ),
-            child: const Text("Create Event", style: TextStyle(color: DEFAULT_BLACK)),
+            child: const Text("Create Event", style: TextStyle(color: DEFAULT_BLACK, fontWeight: FontWeight.bold,)),
           ),
         ],
       ),
