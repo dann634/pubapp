@@ -45,7 +45,8 @@ class _EventScreenState extends State<EventScreen> {
       int? eventId = await getEventId();
       print("Event ID: $eventId");
 
-      if (eventId == null) {
+      if (eventId == null || eventId == -1) {
+
         // User is not in an event
         print("User is not in an event. Showing JoinCreateEventWidget...");
         setState(() {
@@ -87,11 +88,15 @@ class _EventScreenState extends State<EventScreen> {
                   builder: (context) => SettingsWidget(
                     onLeaveEvent: () async {
                       await leaveEvent();
+                      saveEventId(-1);
+                      Navigator.pop(context);
                       checkProfile(); // Refresh the screen after leaving the event
                     },
                     onOptOut: () async {
                       await deleteBACProfile();
                       await saveBACProfile(false, -1, "null");
+                      await leaveEvent();
+                      saveEventId(-1);
                       checkProfile(); // Refresh the screen after opting out
                       // Navigate back to the default page
                       Navigator.pop(context); // Close the settings page
@@ -232,9 +237,21 @@ class _OptInWidgetState extends State<OptInWidget> {
             onPressed: isSubmitting
                 ? null // Disable button while submitting
                 : () async {
+              // Validate weight
+              final weight = double.tryParse(weightController.text);
+              if (weight == null || weight <= 0 || weight > 400) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Please enter a valid weight between 1 and 400 kg.",style: TextStyle(fontWeight: FontWeight.bold)),
+                    backgroundColor: Colors.red, // Optional: Set background color for error
+                  ),
+                );
+                return; // Exit the function if weight is invalid
+              }
+
               if (selectedGender == null || weightController.text.isEmpty || !hasAgreed) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Please fill in all fields and agree to the terms.")),
+                  const SnackBar(content: Text("Please fill in all fields and agree to the terms.",style: TextStyle(fontWeight: FontWeight.bold),),backgroundColor: Colors.red),
                 );
               } else {
                 setState(() {
@@ -256,7 +273,7 @@ class _OptInWidgetState extends State<OptInWidget> {
                 } catch (e) {
                   // Handle errors
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Failed to update info: $e")),
+                    SnackBar(content: Text("Failed to update info: $e",style: TextStyle(fontWeight: FontWeight.bold)),backgroundColor: Colors.red),
                   );
                 } finally {
                   setState(() {
@@ -267,7 +284,7 @@ class _OptInWidgetState extends State<OptInWidget> {
             },
             child: isSubmitting
                 ? const CircularProgressIndicator() // Show loading indicator
-                : const Text("Submit", style: TextStyle(color: DEFAULT_BLACK),),
+                : const Text("Submit", style: TextStyle(color: DEFAULT_BLACK)),
           ),
         ],
       ),
@@ -318,7 +335,7 @@ class JoinCreateEventWidget extends StatelessWidget {
             onPressed: () async {
               if (eventIdController.text.length != 8) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Please enter a valid 8-digit Event ID.")),
+                  const SnackBar(content: Text("Please enter a valid 8-digit Event ID.",style: TextStyle(fontWeight: FontWeight.bold)),backgroundColor: Colors.red),
                 );
               } else {
                 bool success = await joinEvent(int.parse(eventIdController.text));
@@ -326,7 +343,7 @@ class JoinCreateEventWidget extends StatelessWidget {
                   onJoinOrCreate(); // Refresh the screen
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Failed to join event. Please check the Event ID.")),
+                    const SnackBar(content: Text("Failed to join event. Please check the Event ID.",style: TextStyle(fontWeight: FontWeight.bold)),backgroundColor: Colors.red),
                   );
                 }
               }
@@ -557,9 +574,22 @@ class _UpdateInfoWidgetState extends State<UpdateInfoWidget> {
               onPressed: isSubmitting
                   ? null // Disable button while submitting
                   : () async {
+                // Validate weight
+                final weight = double.tryParse(weightController.text);
+                if (weight == null || weight <= 0 || weight > 400) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Please enter a valid weight between 1 and 400 kg.",style: TextStyle(fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.red, // Optional: Set background color for error
+                    ),
+                  );
+                  return; // Exit the function if weight is invalid
+                }
+
                 if (selectedGender == null || weightController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please fill in all fields.")),
+                    const SnackBar(content: Text("Please fill in all fields.",style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.red,),
+
                   );
                 } else {
                   setState(() {
@@ -586,7 +616,7 @@ class _UpdateInfoWidgetState extends State<UpdateInfoWidget> {
                   } catch (e) {
                     // Handle errors
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Failed to update info: $e")),
+                      SnackBar(content: Text("Failed to update info: $e",style: TextStyle(fontWeight: FontWeight.bold)),backgroundColor: Colors.red),
                     );
                   } finally {
                     setState(() {
