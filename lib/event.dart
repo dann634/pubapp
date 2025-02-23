@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'connection.dart' hide getBACProfile;
+import 'connection.dart';
 import 'localStorage.dart';
 import 'utils.dart'; // Assuming this contains your color constants like DEFAULT_ORANGE, DEFAULT_WHITE, etc.
 
@@ -24,7 +24,7 @@ class _EventScreenState extends State<EventScreen> {
 
   Future<void> checkProfile() async {
     print("Checking profile...");
-    final BACProfile = await getBACProfile();
+    final BACProfile = await getBACProfileLocal();
     print("BAC Profile: $BACProfile");
 
     if (BACProfile.isEmpty || BACProfile["isEnabled"] == false) {

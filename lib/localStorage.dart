@@ -68,7 +68,7 @@ Future<void> saveBACProfile(bool isEnabled, double weight, String gender) async 
   prefs.setStringList("bac_profile", [isEnabled.toString(), weight.toString(), gender]);
 }
 
-Future<Map<String, dynamic>> getBACProfile() async {
+Future<Map<String, dynamic>> getBACProfileLocal() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   final data = prefs.getStringList("bac_profile");
   if(data != null) {

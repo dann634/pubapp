@@ -101,16 +101,17 @@ class _MainScreenState extends State<MainScreen> {
       if(isLoginNeeded!) {
         await Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
       } else {
-        final profile_data = await getProfile();
+        final profileData = await getProfile();
 
-        if(profile_data == null) {
+        if(profileData == null) {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
         } else {
-          await getBACProfile();
+
         }
       }
       isLoading = false;
       setState(() {});
+      await getBACProfile();
     });
   }
 

@@ -356,12 +356,13 @@ Future<List<dynamic>> getBACProfile() async {
     list = jsonDecode(response.body);
 
     //Save to local memory
-    await saveBACProfile(list![0], list[1], list[2]);
 
-    return [list[0], list[1], list[2]];
+    await saveBACProfile(list![0] == 1, list[1], list[2]);
+
+    return [list[0] == 1, list[1], list[2]];
 
   } else if (response.statusCode == 404) {
-    await saveBACProfile(false, -1, "null");
+    await saveBACProfile(false, -1.0, "null");
     return [];
   }
 
