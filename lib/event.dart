@@ -87,7 +87,7 @@ class _EventScreenState extends State<EventScreen> {
                       checkProfile(); // Refresh the screen after leaving the event
                     },
                     onOptOut: () async {
-                      await updateBACProfile(false, null, null);
+                      await deleteBACProfile();
                       checkProfile(); // Refresh the screen after opting out
                     },
                     onUpdateInfo: (weight, gender) async {
@@ -369,14 +369,17 @@ class SettingsWidget extends StatelessWidget {
         children: [
           ListTile(
             title: const Text("Leave Event"),
+            textColor: DEFAULT_WHITE,
             onTap: onLeaveEvent,
           ),
           ListTile(
             title: const Text("Opt Out of Events"),
+            textColor: DEFAULT_WHITE,
             onTap: onOptOut,
           ),
           ListTile(
             title: const Text("Update Info"),
+            textColor: DEFAULT_WHITE,
             onTap: () {
               Navigator.push(
                 context,
