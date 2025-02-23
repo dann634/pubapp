@@ -379,7 +379,7 @@ Future<int> createEvent() async {
     final data = jsonDecode(response.body);
     final eventID = data["eventId"];
     if(eventID != null) {
-      await saveEventId(int.parse(eventID));
+      await saveEventId(eventID);
       return eventID;
     }
   }
