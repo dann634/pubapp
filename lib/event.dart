@@ -74,7 +74,10 @@ class _EventScreenState extends State<EventScreen> {
       appBar: AppBar(
         title: const Text("Events"),
         centerTitle: true,
-        actions: [
+        // Hide the settings icon if the current screen is OptInWidget
+        actions: currentScreen is OptInWidget
+            ? []
+            : [
           IconButton(
             onPressed: () {
               // Open settings
@@ -90,8 +93,11 @@ class _EventScreenState extends State<EventScreen> {
                       await deleteBACProfile();
                       await saveBACProfile(false, -1, "null");
                       checkProfile(); // Refresh the screen after opting out
+                      // Navigate back to the default page
+                      Navigator.pop(context); // Close the settings page
                     },
                     onUpdateInfo: (weight, gender) async {
+                      saveBACProfile(true, weight, gender);
                       await updateBACProfile(true, weight, gender);
                       checkProfile(); // Refresh the screen after updating info
                     },
@@ -183,6 +189,10 @@ class _OptInWidgetState extends State<OptInWidget> {
           const SizedBox(height: 20),
           TextField(
             controller: weightController,
+            keyboardType: TextInputType.number, // Numeric keyboard
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly, // Allow only numbers
+            ],
             decoration: const InputDecoration(
               labelText: "Weight (KG)",
               labelStyle: TextStyle(color: Colors.white),
@@ -196,10 +206,6 @@ class _OptInWidgetState extends State<OptInWidget> {
                 borderSide: BorderSide(color: DEFAULT_ORANGE),
               ),
             ),
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly, // Allow only numbers
-            ],
             style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 20),
@@ -237,6 +243,7 @@ class _OptInWidgetState extends State<OptInWidget> {
                 try {
                   // Send data to the server
                   print("Updating BAC Profile: true, ${weightController.text}, $selectedGender");
+                  saveBACProfile(true, double.parse(weightController.text), selectedGender!);
                   await updateBACProfile(
                     true, // isEnabled
                     double.parse(weightController.text), // weight
@@ -283,6 +290,10 @@ class JoinCreateEventWidget extends StatelessWidget {
         children: [
           TextField(
             controller: eventIdController,
+            keyboardType: TextInputType.number, // Numeric keyboard
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly, // Allow only numbers
+            ],
             decoration: const InputDecoration(
               labelText: "Event ID",
               labelStyle: TextStyle(color: Colors.white),
@@ -296,7 +307,6 @@ class JoinCreateEventWidget extends StatelessWidget {
                 borderSide: BorderSide(color: DEFAULT_ORANGE),
               ),
             ),
-            keyboardType: TextInputType.number,
             style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 20),
@@ -496,6 +506,7 @@ class _UpdateInfoWidgetState extends State<UpdateInfoWidget> {
                   });
 
                   try {
+                    saveBACProfile(true, double.parse(weightController.text), selectedGender!);
                     // Send data to the server
                     await updateBACProfile(
                       true, // isEnabled
