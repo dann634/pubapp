@@ -204,7 +204,12 @@ class _OptInWidgetState extends State<OptInWidget> {
           ),
           const SizedBox(height: 20),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const Text(
+                "Enable Event Feature",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
               CupertinoSwitch(
                 value: hasAgreed,
                 onChanged: (value) {
@@ -213,11 +218,7 @@ class _OptInWidgetState extends State<OptInWidget> {
                   });
                 },
               ),
-              const SizedBox(width: 10),
-              const Text(
-                "Enable Event Feature",
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+
             ],
           ),
           const SizedBox(height: 20),
@@ -259,7 +260,7 @@ class _OptInWidgetState extends State<OptInWidget> {
             },
             child: isSubmitting
                 ? const CircularProgressIndicator() // Show loading indicator
-                : const Text("Submit"),
+                : const Text("Submit", style: TextStyle(color: DEFAULT_BLACK),),
           ),
         ],
       ),
