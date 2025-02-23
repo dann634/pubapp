@@ -30,9 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_confetti: 0.3.4
-  google_maps_flutter: ^2.6.1
-  google_maps_flutter_android: ^2.8.0
   location: ^7.0.1
   http: ^1.0.0
   intl: ^0.18.0
