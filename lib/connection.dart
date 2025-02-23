@@ -369,7 +369,7 @@ Future<List<dynamic>> getBACProfile() async {
   return [];
 }
 
-Future<void> createEvent() async {
+Future<int> createEvent() async {
   final url = "$HOST/me/event/create";
 
   final response = await handlePOSTRequest(url, {});
@@ -383,6 +383,7 @@ Future<void> createEvent() async {
       return eventID;
     }
   }
+  return -1;
 }
 
 Future<bool> joinEvent(eventId) async {

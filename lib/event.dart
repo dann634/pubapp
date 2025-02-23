@@ -312,6 +312,9 @@ class JoinCreateEventWidget extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                fixedSize: Size.fromWidth(200)
+            ),
             onPressed: () async {
               if (eventIdController.text.length != 8) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -328,7 +331,12 @@ class JoinCreateEventWidget extends StatelessWidget {
                 }
               }
             },
-            child: const Text("Join Event"),
+
+            child: const Text("Join Event", style: TextStyle(color: DEFAULT_BLACK),),
+          ),
+          const SizedBox(height: 20,),
+          const Text("or",
+
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -337,7 +345,10 @@ class JoinCreateEventWidget extends StatelessWidget {
               saveEventId(eventID);
               onJoinOrCreate(); // Refresh the screen
             },
-            child: const Text("Create Event"),
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size.fromWidth(200)
+            ),
+            child: const Text("Create Event", style: TextStyle(color: DEFAULT_BLACK)),
           ),
         ],
       ),
