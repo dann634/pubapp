@@ -469,7 +469,6 @@ Future<void> deleteBACProfile() async {
   final url = "$HOST/me/bac/delete";
 
   await handlePOSTRequest(url, headers);
-
 }
 
 

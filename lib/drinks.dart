@@ -129,7 +129,6 @@ class _DrinksScreenState extends State<DrinksScreen> {
                 height: 40,
                 child: TextField(
                   onChanged: (value) {
-                    print("s");
                     if(value.isNotEmpty) {
                       int number = int.parse(value);
                       if (number > MAX_INPUT_VALUE) {
