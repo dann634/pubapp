@@ -91,6 +91,8 @@ class _EventScreenState extends State<EventScreen> {
                     },
                     onOptOut: () async {
                       await deleteBACProfile();
+                      await leaveEvent();
+                      await saveEventId(-1);
                       await saveBACProfile(false, -1, "null");
                       checkProfile(); // Refresh the screen after opting out
                       // Navigate back to the default page
