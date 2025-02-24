@@ -68,7 +68,11 @@ class _HomePageState extends State<HomePage> {
     double units = await getUnits("month"); //API request for most recent number
 
     unitCountNumber = units;
-    unitCount = units.toStringAsPrecision(4);
+    if (unitCountNumber == 0) {
+      unitCount = "0.0"; // Explicitly handle zero case
+    } else {
+      unitCount = unitCountNumber?.toStringAsFixed(2); // Format to 2 decimal places
+    }
     saveMonthlyUnits(unitCountNumber ?? 0);
     setState(() {});
     isFirstLoad = false;

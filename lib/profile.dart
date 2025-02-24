@@ -70,15 +70,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
 
-    drinkNumberList[0] = map["Beer"] ?? 0; //Change for all
-    drinkNumberList[1] = map.containsKey("Cider") ? map["Cider"] : 0;
-    drinkNumberList[2] = map.containsKey("Vodka") ? map["Vodka"] : 0;
-    drinkNumberList[3] = map.containsKey("Tequila") ? map["Tequila"] : 0;
-    drinkNumberList[4] = map.containsKey("Rum") ? map["Rum"] : 0;
-    drinkNumberList[5] = map.containsKey("Gin") ? map["Gin"] : 0;
-    drinkNumberList[6] = map.containsKey("Whisky") ? map["Whisky"] : 0;
-    drinkNumberList[7] = map.containsKey("Brandy") ? map["Brandy"] : 0;
-    drinkNumberList[8] = map.containsKey("Other") ? map["Other"] : 0;
+    drinkNumberList[0] = map["Beer"] ?? 0;
+    drinkNumberList[1] = map["Cider"] ?? 0;
+    drinkNumberList[2] = map["Vodka"] ?? 0;
+    drinkNumberList[3] = map["Tequila"] ?? 0;
+    drinkNumberList[4] = map["Rum"] ?? 0;
+    drinkNumberList[5] = map["Gin"] ?? 0;
+    drinkNumberList[6] = map["Whisky"] ?? 0;
+    drinkNumberList[7] = map["Brandy"] ?? 0;
+    drinkNumberList[8] = map["Other"] ?? 0;
 
     //Update Total Drinks
     drinkTotal = 0;
@@ -318,6 +318,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void deleteAccount() {
+
+
 
   }
 
