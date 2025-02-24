@@ -397,17 +397,15 @@ Future<bool> joinEvent(eventId) async {
 
   if(response.statusCode == 404) {
     //event does not exist
+    await saveEventId(-1);
     return false;
   }
 
   if(response.statusCode == 200) {
     //Created successfully - store event code in storage
-    final data = jsonDecode(response.body);
-    final eventID = data["eventId"];
-    if(eventID != null) {
-      await saveEventId(int.parse(eventID));
-      return true;
-    }
+    await saveEventId(eventId);
+
+    return true;
   }
   return false;
 }
@@ -446,12 +444,18 @@ Future<List<dynamic>> getEventDrinkList() async {
   return [];
 }
 
-Future<bool> isUserInEvent() async {
+Future<int> getEventIDServer() async {
   final url = "$HOST/me/event";
 
   final response = await handleGETRequest(url, headers);
 
-  return response.statusCode == 200;
+  final data = jsonDecode(response.body);
+  final eventId = data["event_id"];
+
+  //Update local storage
+  await saveEventId(eventId);
+
+  return eventId;
 }
 
 Future<List<dynamic>> getEventBACList() async {

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pubapp/localStorage.dart';
 import 'package:pubapp/utils.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -112,6 +113,7 @@ class _MainScreenState extends State<MainScreen> {
       isLoading = false;
       setState(() {});
       await getBACProfile();
+      await getEventIDServer();
     });
   }
 
