@@ -403,13 +403,17 @@ Future<bool> joinEvent(eventId) async {
   if(response.statusCode == 200) {
     //Created successfully - store event code in storage
     final data = jsonDecode(response.body);
-    final eventID = data["eventId"];
-    if(eventID != null) {
-      await saveEventId(int.parse(eventID));
+    //final eventID = data["eventId"];
+    if( eventId != -1) {
+      await saveEventId(eventId);
       return true;
+    }else{
+      return false;
     }
+  }else{
+    return false;
   }
-  return false;
+
 }
 
 Future<bool> leaveEvent() async {
@@ -454,16 +458,18 @@ Future<bool> isUserInEvent() async {
   return response.statusCode == 200;
 }
 
-Future<List<dynamic>> getEventBACList() async {
+Future<List<(String, double)>> getEventBACList() async {
   final url = "$HOST/me/event/bac/get";
 
   final response = await handleGETRequest(url, headers);
 
   if(response.statusCode == 200) {
     final list = jsonDecode(response.body);
+    print(list);
     return list;
   }
-
+  print(response.statusCode);
+  print([]);
   return [];
 }
 

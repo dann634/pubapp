@@ -4,6 +4,12 @@ import 'package:flutter/services.dart';
 import 'connection.dart';
 import 'localStorage.dart';
 import 'utils.dart'; // Assuming this contains your color constants like DEFAULT_ORANGE, DEFAULT_WHITE, etc.
+//graph imports
+import 'dart:async';
+import 'dart:math';
+
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 
 class EventScreen extends StatefulWidget {
   const EventScreen({super.key});
@@ -377,14 +383,174 @@ class JoinCreateEventWidget extends StatelessWidget {
   }
 }
 
-// Event Page Widget (Placeholder)
-class EventPageWidget extends StatelessWidget {
+// Event Page Widget
+
+class EventPageWidget extends StatefulWidget {
+  @override
+  _EventPageWidgetState createState() => _EventPageWidgetState();
+}
+
+class _EventPageWidgetState extends State<EventPageWidget> {
+  int? eventId;
+  List<(String, double)> bacList = []; // List of tuples (records)
+  int touchedIndex = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    loadEventData();
+  }
+
+  Future<void> loadEventData() async {
+    final id = await getEventId();
+    // Manually add some test data
+    final list = await getEventBACList();
+    setState(() {
+      eventId = id;
+      bacList = list;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        "Event Page",
-        style: TextStyle(color: Colors.white, fontSize: 24),
+    return Scaffold(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Event ID: ${eventId ?? "Loading..."}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: bacList.isEmpty
+                  ? const Center(
+                child: Text(
+                  'No BAC data available',
+                  style: TextStyle(color: Colors.white),
+                ),
+              )
+                  : BarChart(
+                BarChartData(
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (group) => Colors.blueGrey, // Set tooltip background color
+                      tooltipMargin: -10,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final user = bacList[groupIndex];
+                        return BarTooltipItem(
+                          '${user.$1}\n', // Access the first field (name)
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: 'BAC: ${user.$2}', // Access the second field (BAC value)
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    touchCallback: (FlTouchEvent event, barTouchResponse) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions ||
+                            barTouchResponse == null ||
+                            barTouchResponse.spot == null) {
+                          touchedIndex = -1;
+                          return;
+                        }
+                        touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
+                      });
+                    },
+                  ),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index >= 0 && index < bacList.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                bacList[index].$1, // Access the first field (name)
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        reservedSize: 38,
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: false,
+                      ),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: false,
+                      ),
+                    ),
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: false,
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(
+                    show: false,
+                  ),
+                  barGroups: bacList.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final user = entry.value;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: user.$2, // Access the second field (BAC value)
+                          color: touchedIndex == index
+                              ? Colors.orange
+                              : Colors.blue,
+                          width: 22,
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: 0.3, // Adjust this based on your max BAC value
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        ),
+                      ],
+                      showingTooltipIndicators: touchedIndex == index ? [0] : [],
+                    );
+                  }).toList(),
+                  gridData: FlGridData(
+                    show: false,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
