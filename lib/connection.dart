@@ -444,18 +444,12 @@ Future<List<dynamic>> getEventDrinkList() async {
   return [];
 }
 
-Future<int> getEventIDServer() async {
+Future<bool> isUserInEvent() async {
   final url = "$HOST/me/event";
 
   final response = await handleGETRequest(url, headers);
 
-  final data = jsonDecode(response.body);
-  final eventId = data["event_id"];
-
-  //Update local storage
-  await saveEventId(eventId);
-
-  return eventId;
+  return response.statusCode == 200;
 }
 
 Future<List<dynamic>> getEventBACList() async {
