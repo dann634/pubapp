@@ -444,12 +444,18 @@ Future<List<dynamic>> getEventDrinkList() async {
   return [];
 }
 
-Future<bool> isUserInEvent() async {
+Future<int> getEventIDServer() async {
   final url = "$HOST/me/event";
 
   final response = await handleGETRequest(url, headers);
 
-  return response.statusCode == 200;
+  final data = jsonDecode(response.body);
+  final eventId = data["event_id"];
+
+  //Update local storage
+  await saveEventId(eventId);
+
+  return eventId;
 }
 
 Future<List<dynamic>> getEventBACList() async {
@@ -469,6 +475,20 @@ Future<void> deleteBACProfile() async {
   final url = "$HOST/me/bac/delete";
 
   await handlePOSTRequest(url, headers);
+}
+
+Future<void> deleteAccount() async {
+  final url = "$HOST/me/delete";
+
+  String? refresh_token = await secureStorage.read(key: "refreshToken");
+
+
+  final data = {
+    "refresh_token" : refresh_token
+  };
+
+  final response = await handlePOSTRequest(url, data);
+  print(response.statusCode);
 }
 
 

@@ -407,7 +407,7 @@ class _EventPageWidgetState extends State<EventPageWidget> {
     final list = await getEventBACList();
     setState(() {
       eventId = id;
-      bacList = list;
+      // bacList = list;
     });
   }
 

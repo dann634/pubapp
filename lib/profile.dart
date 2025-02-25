@@ -297,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
 
             getSettingsButton("Logout", logoutBtnAction),
-            getSettingsButton("Delete Account", deleteAccount)
+            getSettingsButton("Delete Account", deleteAccountButtonPress)
 
           ],
         ),
@@ -306,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   }
 
-  void logoutBtnAction() {
+  void logoutBtnAction() async {
 
     //Logout Request
     logout();
@@ -317,10 +317,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   }
 
-  void deleteAccount() {
-
-
-
+  void deleteAccountButtonPress() async {
+     deleteAccount();
+    Navigator.pop(context);
+    Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
   }
 
 
