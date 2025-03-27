@@ -41,7 +41,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         onRefresh: loadFriendsList,
         child: SingleChildScrollView(
           child: Container(
-            height: MediaQuery.of(context).size.height- 100,
+            height: MediaQuery.of(context).size.height - 100,
             alignment: Alignment.center,
             padding: EdgeInsets.symmetric(
                 vertical: 15,

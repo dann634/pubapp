@@ -85,8 +85,20 @@ Future<Map<String, dynamic>> getBACProfileLocal() async {
   return {};
 }
 
+Future<void> saveEventDrinkListLocally(List<String> list) async {
+  final SharedPreferences pref = await SharedPreferences.getInstance();
+  pref.setStringList("drink_list", list);
+}
 
+Future<List<String>?> getEventDrinkListLocally() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getStringList("drink_list");
+}
 
+Future<void> resetLocalEventDrinkList() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.remove("drink_list");
+}
 
 
 

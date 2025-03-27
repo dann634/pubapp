@@ -386,7 +386,7 @@ Future<int> createEvent() async {
   return -1;
 }
 
-Future<bool> joinEvent(eventId) async {
+Future<List<dynamic>> joinEvent(eventId) async {
   final url = "$HOST/me/event/join";
 
   final data = {
@@ -398,16 +398,27 @@ Future<bool> joinEvent(eventId) async {
   if(response.statusCode == 404) {
     //event does not exist
     await saveEventId(-1);
-    return false;
+    return [false];
   }
+
+
 
   if(response.statusCode == 200) {
     //Created successfully - store event code in storage
     await saveEventId(eventId);
 
-    return true;
+    final startTime = jsonDecode(response.body)["start_time"];
+
+    //Format Time
+    // Parse the date from the input format
+    DateTime dateTime = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(startTime);
+
+    // Format it to day-month-year-hour-min-sec
+    String formattedDate = DateFormat("dd-MM-yyyy-HH-mm-ss").format(dateTime);
+
+    return [true, formattedDate];
   }
-  return false;
+  return [false];
 }
 
 Future<bool> leaveEvent() async {
@@ -430,15 +441,13 @@ Future<List<dynamic>> getEventDrinkList() async {
 
   if(response.statusCode == 200) {
     final data = jsonDecode(response.body);
-    final drinkList = data[0];
-
-    //Set new access time
-    final newTime = data[1];
-    DateTime dateTime = DateTime.parse(newTime);
-    String formattedDate = DateFormat("dd-MM-yyyy-HH-mm-ss").format(dateTime);
-    await saveEventLastAccess(formattedDate);
+    final drinkList = data["drink_list"];
 
     return drinkList;
+  }
+
+  if(response.statusCode == 500) {
+    await saveEventLastAccess("1-1-2020-12-0-0");
   }
 
   return [];
@@ -459,12 +468,13 @@ Future<int> getEventIDServer() async {
 }
 
 Future<List<dynamic>> getEventBACList() async {
-  final url = "$HOST/me/event/bac/get";
+  final url = "$HOST/me/event/bac/get?username=";
 
   final response = await handleGETRequest(url, headers);
 
   if(response.statusCode == 200) {
     final list = jsonDecode(response.body);
+    print(list);
     return list;
   }
 
@@ -511,7 +521,7 @@ Future<http.Response> handleGETRequest(uri, localHeaders) async {
     response = await http.get(
       url,
       headers: localHeaders,
-    ).timeout(Duration(seconds: 5));
+    ).timeout(Duration(seconds: 10));
 
   }
   return response;
@@ -537,7 +547,7 @@ Future<http.Response> handlePOSTRequest(uri, data) async {
       url,
       headers: headers,
       body: jsonEncode(data),
-    ).timeout(Duration(seconds: 5));
+    ).timeout(Duration(seconds: 10));
   }
   return response;
 }

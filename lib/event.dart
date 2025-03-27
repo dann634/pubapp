@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:pubapp/event.dart';
 import 'connection.dart';
 import 'localStorage.dart';
 import 'utils.dart'; // Assuming this contains your color constants like DEFAULT_ORANGE, DEFAULT_WHITE, etc.
@@ -95,6 +99,8 @@ class _EventScreenState extends State<EventScreen> {
                     onLeaveEvent: () async {
                       await leaveEvent();
                       saveEventId(-1);
+                      await resetLocalEventDrinkList();
+                      await saveEventLastAccess("01-01-2020-12-00-00"); //Resets last access to beginning
                       Navigator.pop(context);
                       checkProfile(); // Refresh the screen after leaving the event
                     },
@@ -102,6 +108,7 @@ class _EventScreenState extends State<EventScreen> {
                       await deleteBACProfile();
                       await leaveEvent();
                       await saveEventId(-1);
+                      await resetLocalEventDrinkList();
                       await saveBACProfile(false, -1, "null");
                       await leaveEvent();
                       saveEventId(-1);
@@ -346,8 +353,9 @@ class JoinCreateEventWidget extends StatelessWidget {
                   const SnackBar(content: Text("Please enter a valid 8-digit Event ID.",style: TextStyle(fontWeight: FontWeight.bold)),backgroundColor: Colors.red),
                 );
               } else {
-                bool success = await joinEvent(int.parse(eventIdController.text));
-                if (success) {
+                List<dynamic> response = await joinEvent(int.parse(eventIdController.text));
+                if (response[0]) {
+                  await saveEventLastAccess(response[1]);
                   onJoinOrCreate(); // Refresh the screen
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -370,6 +378,11 @@ class JoinCreateEventWidget extends StatelessWidget {
             onPressed: () async {
               final eventID =  await createEvent();
               saveEventId(eventID);
+
+              //Get Local Time
+              DateTime dateTime = DateTime.now();
+              String formattedDate = DateFormat("dd-MM-yyyy-HH-mm-ss").format(dateTime);
+              saveEventLastAccess(formattedDate);
               onJoinOrCreate(); // Refresh the screen
             },
             style: ElevatedButton.styleFrom(
@@ -395,6 +408,9 @@ class _EventPageWidgetState extends State<EventPageWidget> {
   List<(String, double)> bacList = []; // List of tuples (records)
   int touchedIndex = -1;
 
+  List<Drink> drinkList = List.empty(growable: true);
+  List<Widget> widgetDrinkList = List.empty(growable: true);
+
   @override
   void initState() {
     super.initState();
@@ -403,155 +419,244 @@ class _EventPageWidgetState extends State<EventPageWidget> {
 
   Future<void> loadEventData() async {
     final id = await getEventId();
+    eventId = id;
     // Manually add some test data
-    final list = await getEventBACList();
-    setState(() {
-      eventId = id;
-      // bacList = list;
-    });
+    //final list = await getEventBACList();
+
+    drinkList.clear();
+    List<dynamic> newDrinkList = await getEventDrinkList();
+    if(newDrinkList.isEmpty) {
+      setState(() {});
+      return;
+    }
+
+
+    for(int i = newDrinkList.length-1; i >= 0; i--) {
+      final name = newDrinkList[i][0];
+      final fullname = newDrinkList[i][1];
+      final type = newDrinkList[i][3];
+      final units = newDrinkList[i][2];
+      final time = newDrinkList[i][4];
+      DateTime dateTime = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(time);
+      String formattedDate = DateFormat("EEE, dd MMM HH:mm").format(dateTime);
+      drinkList.insert(0, Drink(name, fullname, type, units, formattedDate));
+    }
+    await buildDrinkList();
+  }
+
+
+  Future<void> buildDrinkList() async {
+
+    widgetDrinkList.clear();
+
+    widgetDrinkList.add(Divider(color: DEFAULT_WHITE));
+    for(int i = 0; i < drinkList.length; i++) {
+      Drink drink = drinkList[i];
+      widgetDrinkList.add(Container(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        height: 70,
+        width: MediaQuery.of(context).size.width,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(drink.username,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(drink.fullname),
+                Spacer(),
+                Text(drink.time),
+              ],
+            ),
+
+            Column(
+              spacing: 10,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("${drink.units} units",
+                  style: TextStyle(
+                    fontSize: 18
+                  ),
+                ),
+                Text(drink.type),
+              ],
+            ),
+          ],
+        ),
+      ));
+      widgetDrinkList.add(Divider(color: DEFAULT_WHITE));
+    }
+
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Event ID: ${eventId ?? "Loading..."}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: bacList.isEmpty
-                  ? const Center(
-                child: Text(
-                  'No BAC data available',
-                  style: TextStyle(color: Colors.white),
+      body: RefreshIndicator(
+        onRefresh: loadEventData,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+            child: Container(
+              height: MediaQuery.of(context).size.height - 100,
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Event ID: ${eventId ?? "Loading..."}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              )
-                  : BarChart(
-                BarChartData(
-                  barTouchData: BarTouchData(
-                    touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (group) => Colors.blueGrey, // Set tooltip background color
-                      tooltipMargin: -10,
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        final user = bacList[groupIndex];
-                        return BarTooltipItem(
-                          '${user.$1}\n', // Access the first field (name)
-                          const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: 'BAC: ${user.$2}', // Access the second field (BAC value)
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    touchCallback: (FlTouchEvent event, barTouchResponse) {
-                      setState(() {
-                        if (!event.isInterestedForInteractions ||
-                            barTouchResponse == null ||
-                            barTouchResponse.spot == null) {
-                          touchedIndex = -1;
-                          return;
-                        }
-                        touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
-                      });
-                    },
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          final index = value.toInt();
-                          if (index >= 0 && index < bacList.length) {
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                bacList[index].$1, // Access the first field (name)
-                                style: const TextStyle(
+                Container(
+                  height: 250,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: bacList.isEmpty
+                        ? const Center(
+                      child: Text(
+                        'No BAC data available',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                        : BarChart(
+                      BarChartData(
+                        barTouchData: BarTouchData(
+                          touchTooltipData: BarTouchTooltipData(
+                            getTooltipColor: (group) => Colors.blueGrey, // Set tooltip background color
+                            tooltipMargin: -10,
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              final user = bacList[groupIndex];
+                              return BarTooltipItem(
+                                '${user.$1}\n', // Access the first field (name)
+                                const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
                                 ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                        reservedSize: 38,
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: false,
-                      ),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: false,
-                      ),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: false,
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: false,
-                  ),
-                  barGroups: bacList.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final user = entry.value;
-                    return BarChartGroupData(
-                      x: index,
-                      barRods: [
-                        BarChartRodData(
-                          toY: user.$2, // Access the second field (BAC value)
-                          color: touchedIndex == index
-                              ? Colors.orange
-                              : Colors.blue,
-                          width: 22,
-                          backDrawRodData: BackgroundBarChartRodData(
-                            show: true,
-                            toY: 0.3, // Adjust this based on your max BAC value
-                            color: Colors.grey.withOpacity(0.2),
+                                children: <TextSpan>[
+                                  TextSpan(
+                                    text: 'BAC: ${user.$2}', // Access the second field (BAC value)
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          touchCallback: (FlTouchEvent event, barTouchResponse) {
+                            setState(() {
+                              if (!event.isInterestedForInteractions ||
+                                  barTouchResponse == null ||
+                                  barTouchResponse.spot == null) {
+                                touchedIndex = -1;
+                                return;
+                              }
+                              touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
+                            });
+                          },
+                        ),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                final index = value.toInt();
+                                if (index >= 0 && index < bacList.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      bacList[index].$1, // Access the first field (name)
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                              reservedSize: 38,
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: false,
+                            ),
+                          ),
+                          rightTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: false,
+                            ),
+                          ),
+                          topTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: false,
+                            ),
                           ),
                         ),
-                      ],
-                      showingTooltipIndicators: touchedIndex == index ? [0] : [],
-                    );
-                  }).toList(),
-                  gridData: FlGridData(
-                    show: false,
+                        borderData: FlBorderData(
+                          show: false,
+                        ),
+                        barGroups: bacList.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final user = entry.value;
+                          return BarChartGroupData(
+                            x: index,
+                            barRods: [
+                              BarChartRodData(
+                                toY: user.$2, // Access the second field (BAC value)
+                                color: touchedIndex == index
+                                    ? Colors.orange
+                                    : Colors.blue,
+                                width: 22,
+                                backDrawRodData: BackgroundBarChartRodData(
+                                  show: true,
+                                  toY: 0.3, // Adjust this based on your max BAC value
+                                  color: Colors.grey.withOpacity(0.2),
+                                ),
+                              ),
+                            ],
+                            showingTooltipIndicators: touchedIndex == index ? [0] : [],
+                          );
+                        }).toList(),
+                        gridData: FlGridData(
+                          show: false,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                Container(
+                  child: Expanded(
+                    child: SingleChildScrollView(
+
+                      child: Column(
+                        children: widgetDrinkList,
+                      ),
+                    ),
+                  ),
+                )
+              ],
             ),
-          ),
-        ],
-      ),
+            ),
+
+        )
+      )
     );
   }
 }
@@ -803,6 +908,32 @@ class _UpdateInfoWidgetState extends State<UpdateInfoWidget> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class Drink {
+  String username;
+  String fullname;
+  String units;
+  String type;
+  String time;
+
+  Drink(this.username, this.fullname, this.units, this.type, this.time);
+
+  Map<String, dynamic> toJson() {
+    return {
+      "username": username,
+      "fullname": fullname,
+      "units": units,
+      "type": type,
+      "time": time,
+    };
+  }
+
+  factory Drink.fromJson(Map<String, dynamic> json) {
+    return Drink(
+      json["username"], json["fullname"], json["units"], json["type"], json["time"],
     );
   }
 }
