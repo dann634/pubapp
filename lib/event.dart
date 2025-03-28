@@ -4,16 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:pubapp/event.dart';
+import 'package:pubapp/widgets/UnitsGraph.dart';
+import 'classes/Drink.dart';
 import 'connection.dart';
 import 'localStorage.dart';
 import 'utils.dart'; // Assuming this contains your color constants like DEFAULT_ORANGE, DEFAULT_WHITE, etc.
 //graph imports
 import 'dart:async';
-import 'dart:math';
 
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
 
 class EventScreen extends StatefulWidget {
   const EventScreen({super.key});
@@ -406,10 +404,10 @@ class EventPageWidget extends StatefulWidget {
 class _EventPageWidgetState extends State<EventPageWidget> {
   int? eventId;
   List<(String, double)> bacList = []; // List of tuples (records)
-  int touchedIndex = -1;
 
   List<Drink> drinkList = List.empty(growable: true);
   List<Widget> widgetDrinkList = List.empty(growable: true);
+  Widget graphWidget = CircularProgressIndicator(color: Colors.white);
 
   @override
   void initState() {
@@ -492,6 +490,8 @@ class _EventPageWidgetState extends State<EventPageWidget> {
       widgetDrinkList.add(Divider(color: DEFAULT_WHITE));
     }
 
+    graphWidget = UnitsGraph(drinkList: drinkList);
+
     setState(() {});
   }
 
@@ -502,8 +502,11 @@ class _EventPageWidgetState extends State<EventPageWidget> {
         onRefresh: loadEventData,
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
-            child: Container(
-              height: MediaQuery.of(context).size.height - 100,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - 130,
+                maxHeight: MediaQuery.of(context).size.height - 130,
+              ),
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -518,136 +521,18 @@ class _EventPageWidgetState extends State<EventPageWidget> {
                     ),
                   ),
                 ),
-                Container(
-                  height: 250,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: bacList.isEmpty
-                        ? const Center(
-                      child: Text(
-                        'No BAC data available',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    )
-                        : BarChart(
-                      BarChartData(
-                        barTouchData: BarTouchData(
-                          touchTooltipData: BarTouchTooltipData(
-                            getTooltipColor: (group) => Colors.blueGrey, // Set tooltip background color
-                            tooltipMargin: -10,
-                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                              final user = bacList[groupIndex];
-                              return BarTooltipItem(
-                                '${user.$1}\n', // Access the first field (name)
-                                const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(
-                                    text: 'BAC: ${user.$2}', // Access the second field (BAC value)
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          touchCallback: (FlTouchEvent event, barTouchResponse) {
-                            setState(() {
-                              if (!event.isInterestedForInteractions ||
-                                  barTouchResponse == null ||
-                                  barTouchResponse.spot == null) {
-                                touchedIndex = -1;
-                                return;
-                              }
-                              touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
-                            });
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                final index = value.toInt();
-                                if (index >= 0 && index < bacList.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      bacList[index].$1, // Access the first field (name)
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
-                              },
-                              reservedSize: 38,
-                            ),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: false,
-                            ),
-                          ),
-                          rightTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: false,
-                            ),
-                          ),
-                          topTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: false,
-                            ),
-                          ),
-                        ),
-                        borderData: FlBorderData(
-                          show: false,
-                        ),
-                        barGroups: bacList.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final user = entry.value;
-                          return BarChartGroupData(
-                            x: index,
-                            barRods: [
-                              BarChartRodData(
-                                toY: user.$2, // Access the second field (BAC value)
-                                color: touchedIndex == index
-                                    ? Colors.orange
-                                    : Colors.blue,
-                                width: 22,
-                                backDrawRodData: BackgroundBarChartRodData(
-                                  show: true,
-                                  toY: 0.3, // Adjust this based on your max BAC value
-                                  color: Colors.grey.withOpacity(0.2),
-                                ),
-                              ),
-                            ],
-                            showingTooltipIndicators: touchedIndex == index ? [0] : [],
-                          );
-                        }).toList(),
-                        gridData: FlGridData(
-                          show: false,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  child: Expanded(
-                    child: SingleChildScrollView(
 
-                      child: Column(
-                        children: widgetDrinkList,
-                      ),
+                Container(
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.all(10),
+                  child: graphWidget,
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+
+                    child: Column(
+                      children: widgetDrinkList,
                     ),
                   ),
                 )
@@ -705,55 +590,55 @@ class SettingsWidget extends StatelessWidget {
             iconColor: DEFAULT_WHITE,
             onTap: onLeaveEvent,
           ),
-          ListTile(
-            contentPadding: EdgeInsets.all(0),
-
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  spacing: 15,
-                  children: [
-                    const Icon(Icons.block),
-                    const Text("Opt Out of Events")
-                  ],
-                ),
-
-                Icon(Icons.keyboard_arrow_right_outlined)
-              ],
-            ),
-            textColor: DEFAULT_WHITE,
-            iconColor: DEFAULT_WHITE,
-            onTap: onOptOut,
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.all(0),
-
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  spacing: 15,
-                  children: [
-                    const Icon(Icons.autorenew),
-                    const Text("Update Info")
-                  ],
-                ),
-
-                Icon(Icons.keyboard_arrow_right_outlined)
-              ],
-            ),
-            textColor: DEFAULT_WHITE,
-            iconColor: DEFAULT_WHITE,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => UpdateInfoWidget(onUpdateInfo: onUpdateInfo),
-                ),
-              );
-            },
-          ),
+          // ListTile(
+          //   contentPadding: EdgeInsets.all(0),
+          //
+          //   title: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       Row(
+          //         spacing: 15,
+          //         children: [
+          //           const Icon(Icons.block),
+          //           const Text("Opt Out of Events")
+          //         ],
+          //       ),
+          //
+          //       Icon(Icons.keyboard_arrow_right_outlined)
+          //     ],
+          //   ),
+          //   textColor: DEFAULT_WHITE,
+          //   iconColor: DEFAULT_WHITE,
+          //   onTap: onOptOut,
+          // ),
+          // ListTile(
+          //   contentPadding: EdgeInsets.all(0),
+          //
+          //   title: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       Row(
+          //         spacing: 15,
+          //         children: [
+          //           const Icon(Icons.autorenew),
+          //           const Text("Update Info")
+          //         ],
+          //       ),
+          //
+          //       Icon(Icons.keyboard_arrow_right_outlined)
+          //     ],
+          //   ),
+          //   textColor: DEFAULT_WHITE,
+          //   iconColor: DEFAULT_WHITE,
+          //   onTap: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (context) => UpdateInfoWidget(onUpdateInfo: onUpdateInfo),
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );
@@ -912,28 +797,3 @@ class _UpdateInfoWidgetState extends State<UpdateInfoWidget> {
   }
 }
 
-class Drink {
-  String username;
-  String fullname;
-  String units;
-  String type;
-  String time;
-
-  Drink(this.username, this.fullname, this.units, this.type, this.time);
-
-  Map<String, dynamic> toJson() {
-    return {
-      "username": username,
-      "fullname": fullname,
-      "units": units,
-      "type": type,
-      "time": time,
-    };
-  }
-
-  factory Drink.fromJson(Map<String, dynamic> json) {
-    return Drink(
-      json["username"], json["fullname"], json["units"], json["type"], json["time"],
-    );
-  }
-}
